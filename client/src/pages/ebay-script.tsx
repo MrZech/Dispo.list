@@ -11,7 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Sparkles, Copy, RotateCcw, FileText, Loader2, CheckCircle2 } from "lucide-react";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { Sparkles, Copy, RotateCcw, FileText, Loader2, CheckCircle2, Save } from "lucide-react";
 
 export default function EbayScript() {
   const { toast } = useToast();
@@ -21,6 +22,7 @@ export default function EbayScript() {
   const [savedScript, setSavedScript] = useState<string>("");
   const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false);
   const [isGeneratingScript, setIsGeneratingScript] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [pastedSpecs, setPastedSpecs] = useState<string>("");
   const [customSku, setCustomSku] = useState<string>("");
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -176,9 +178,38 @@ export default function EbayScript() {
     toast({ title: "Copied", description: `${label} copied to clipboard` });
   };
 
-  const handleSaveScript = () => {
-    setSavedScript(aiResponse);
-    toast({ title: "Saved", description: "Script saved for reference" });
+  const handleSaveScript = async () => {
+    if (!aiResponse.trim()) {
+      toast({ title: "Error", description: "No script to save", variant: "destructive" });
+      return;
+    }
+
+    if (!selectedItemId) {
+      setSavedScript(aiResponse);
+      toast({ 
+        title: "Saved Locally", 
+        description: "Script saved for reference. Select an item from database to save to eBay listing.",
+      });
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await apiRequest("PUT", `/api/items/${selectedItemId}`, {
+        listingDescription: aiResponse,
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/items", selectedItemId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/items"] });
+      setSavedScript(aiResponse);
+      toast({ 
+        title: "Saved to Item", 
+        description: "Description saved to item's eBay listing. It will be included in CSV exports.",
+      });
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to save to database", variant: "destructive" });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleClear = () => {
@@ -324,11 +355,15 @@ Accessories: Original box, Manual"
                   <Button 
                     variant="outline"
                     onClick={handleSaveScript}
-                    disabled={!aiResponse}
+                    disabled={!aiResponse || isSaving}
                     data-testid="button-save-listing"
                   >
-                    <CheckCircle2 className="w-4 h-4 mr-2" />
-                    Save Final Listing
+                    {isSaving ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Save className="w-4 h-4 mr-2" />
+                    )}
+                    {selectedItemId ? "Save to Item" : "Save Locally"}
                   </Button>
                   <Button 
                     variant="outline"
