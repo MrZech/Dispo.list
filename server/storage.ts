@@ -13,6 +13,7 @@ export interface IStorage {
   getItems(options?: { status?: string, search?: string, limit?: number, offset?: number }): Promise<Item[]>;
   getItem(id: number): Promise<ItemWithPhotos | undefined>;
   getItemBySku(sku: string): Promise<Item | undefined>;
+  getItemsByIds(ids: number[]): Promise<ItemWithPhotos[]>;
   createItem(item: InsertItem): Promise<Item>;
   updateItem(id: number, updates: UpdateItemRequest): Promise<Item>;
   deleteItem(id: number): Promise<void>;
@@ -58,6 +59,25 @@ export class DatabaseStorage implements IStorage {
   async getItemBySku(sku: string): Promise<Item | undefined> {
     const [item] = await db.select().from(items).where(eq(items.sku, sku));
     return item;
+  }
+
+  async getItemsByIds(ids: number[]): Promise<ItemWithPhotos[]> {
+    if (ids.length === 0) return [];
+    
+    const foundItems = await db.select().from(items).where(inArray(items.id, ids));
+    
+    // Get all photos for these items
+    const allPhotos = await db
+      .select()
+      .from(photos)
+      .where(inArray(photos.itemId, ids))
+      .orderBy(photos.sortOrder);
+
+    // Map photos to items
+    return foundItems.map(item => ({
+      ...item,
+      photos: allPhotos.filter(p => p.itemId === item.id)
+    }));
   }
 
   async createItem(insertItem: InsertItem): Promise<Item> {

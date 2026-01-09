@@ -6,6 +6,8 @@ import { z } from "zod";
 import { setupAuth, registerAuthRoutes } from "./replit_integrations/auth";
 import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
 
+import { generateCSV } from "./lib/csv-generator";
+
 export async function registerRoutes(
   httpServer: Server,
   app: Express
@@ -142,6 +144,37 @@ export async function registerRoutes(
       res.status(201).json(profile);
     } catch (err) {
        res.status(400).json({ message: "Invalid input" });
+    }
+  });
+
+  // === CSV GENERATION ===
+
+  app.post(api.csv.generate.path, async (req, res) => {
+    try {
+      const { profileId, itemIds } = api.csv.generate.input.parse(req.body);
+      
+      const profile = (await storage.getExportProfiles()).find(p => p.id === profileId);
+      if (!profile) {
+        return res.status(404).json({ message: "Export profile not found" });
+      }
+
+      const items = await storage.getItemsByIds(itemIds);
+      if (items.length === 0) {
+        return res.status(400).json({ message: "No items found for the provided IDs" });
+      }
+
+      const csvContent = generateCSV(items, profile);
+
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', `attachment; filename="ebay-export-${new Date().toISOString()}.csv"`);
+      res.send(csvContent);
+
+    } catch (err) {
+      console.error("CSV Generation Error:", err);
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid input" });
+      }
+      res.status(500).json({ message: "Failed to generate CSV" });
     }
   });
 
