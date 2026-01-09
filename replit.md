@@ -44,10 +44,16 @@ The server uses a storage abstraction pattern (`server/storage.ts`) that interfa
 - **Migrations**: Drizzle Kit with `drizzle-kit push` for schema sync
 
 Key database tables:
-- `items` - Core inventory with intake, testing, and eBay listing fields
+- `items` - Core inventory with intake, testing, and eBay listing fields (including ebayCategoryId, ebayConditionId, listingTitle, listingDescription)
 - `photos` - Item images with sorting and type classification
 - `export_profiles` - CSV template configurations with field mappings
 - `users` / `sessions` - Authentication (Replit Auth)
+
+### eBay Integration
+- **Category IDs**: Defined in `shared/ebay-categories.ts` - maps to eBay's official category IDs (e.g., 179 = Desktop Computers)
+- **Condition IDs**: Standard eBay condition codes (1000 = New, 3000 = Used, 7000 = For Parts)
+- **CSV Export**: `/api/csv/ebay-export` generates eBay-compatible draft listing CSV matching their exact template format
+- **Auto-generation**: Listing titles and HTML descriptions are auto-generated from specs if not manually entered
 
 ### Authentication
 - **Provider**: Replit Auth (OpenID Connect)
