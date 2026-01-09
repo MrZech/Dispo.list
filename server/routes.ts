@@ -7,6 +7,7 @@ import { setupAuth, registerAuthRoutes } from "./replit_integrations/auth";
 import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
 
 import { generateCSV } from "./lib/csv-generator";
+import { generateEbayDraftCSV } from "./lib/ebay-csv-generator";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -175,6 +176,32 @@ export async function registerRoutes(
         return res.status(400).json({ message: "Invalid input" });
       }
       res.status(500).json({ message: "Failed to generate CSV" });
+    }
+  });
+
+  // === EBAY CSV EXPORT ===
+
+  app.post(api.csv.ebayExport.path, async (req, res) => {
+    try {
+      const { itemIds } = api.csv.ebayExport.input.parse(req.body);
+
+      const items = await storage.getItemsByIds(itemIds);
+      if (items.length === 0) {
+        return res.status(400).json({ message: "No items found for the provided IDs" });
+      }
+
+      const csvContent = generateEbayDraftCSV(items);
+
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', `attachment; filename="ebay-draft-listing-${new Date().toISOString().slice(0, 10)}.csv"`);
+      res.send(csvContent);
+
+    } catch (err) {
+      console.error("eBay CSV Export Error:", err);
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid input" });
+      }
+      res.status(500).json({ message: "Failed to generate eBay CSV" });
     }
   });
 

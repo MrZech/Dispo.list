@@ -129,6 +129,16 @@ export const api = {
         200: z.any(), // File download
       },
     },
+    ebayExport: {
+      method: 'POST' as const,
+      path: '/api/csv/ebay-export',
+      input: z.object({
+        itemIds: z.array(z.number()),
+      }),
+      responses: {
+        200: z.any(), // File download
+      },
+    },
   },
 };
 

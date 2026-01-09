@@ -1,6 +1,7 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useParams, useLocation } from "wouter";
 import { Item, Photo, InsertPhoto, User } from "@shared/schema";
+import { EBAY_COMPUTER_CATEGORIES, EBAY_CONDITION_IDS, getCategoryName, getConditionName } from "@shared/ebay-categories";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import LayoutShell from "@/components/layout-shell";
 import { 
@@ -17,7 +18,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { 
   Package, Trash2, Camera, Maximize2, 
   CheckCircle2, AlertCircle, ArrowLeft, Save, 
-  ExternalLink, FileOutput
+  ExternalLink, FileOutput, Download
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
@@ -377,6 +378,26 @@ export default function ItemDetail() {
                 <CardDescription>Prepare this item for export to eBay CSV.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
+                <div className="space-y-2">
+                  <Label>Listing Title (max 80 chars)</Label>
+                  <Input 
+                    defaultValue={item.listingTitle || ""} 
+                    onBlur={(e) => handleUpdate("listingTitle", e.target.value)} 
+                    placeholder="Generated from specs if left empty"
+                    maxLength={80}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label>Listing Description (HTML)</Label>
+                  <Textarea 
+                    defaultValue={item.listingDescription || ""} 
+                    onBlur={(e) => handleUpdate("listingDescription", e.target.value)} 
+                    placeholder="Auto-generated from specs if left empty. Supports HTML."
+                    className="min-h-[120px] font-mono text-sm"
+                  />
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <Label>List Price ($)</Label>
@@ -399,15 +420,25 @@ export default function ItemDetail() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>eBay Category ID</Label>
-                    <Input 
+                    <Label>eBay Category</Label>
+                    <Select 
                       defaultValue={item.ebayCategoryId || ""} 
-                      onBlur={(e) => handleUpdate("ebayCategoryId", e.target.value)} 
-                      placeholder="Numeric ID"
-                    />
+                      onValueChange={(val) => handleUpdate("ebayCategoryId", val)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select eBay Category" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover border-popover-border max-h-80">
+                        {EBAY_COMPUTER_CATEGORIES.map((cat) => (
+                          <SelectItem key={cat.id} value={cat.id}>
+                            {cat.name} ({cat.id})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label>Condition ID</Label>
+                    <Label>Condition</Label>
                     <Select 
                       defaultValue={item.ebayConditionId || ""} 
                       onValueChange={(val) => handleUpdate("ebayConditionId", val)}
@@ -416,9 +447,11 @@ export default function ItemDetail() {
                         <SelectValue placeholder="Select Condition" />
                       </SelectTrigger>
                       <SelectContent className="bg-popover border-popover-border">
-                        <SelectItem value="1000">New</SelectItem>
-                        <SelectItem value="3000">Used</SelectItem>
-                        <SelectItem value="7000">For Parts / Not Working</SelectItem>
+                        {EBAY_CONDITION_IDS.map((cond) => (
+                          <SelectItem key={cond.id} value={cond.id}>
+                            {cond.name}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>

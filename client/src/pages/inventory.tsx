@@ -5,19 +5,61 @@ import { ItemCard } from "@/components/item-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PackagePlus, Search, SlidersHorizontal, Loader2 } from "lucide-react";
+import { PackagePlus, Search, SlidersHorizontal, Loader2, Download } from "lucide-react";
 import { Link } from "wouter";
 import { useDebounce } from "@/hooks/use-debounce";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Inventory() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<string>("all");
+  const [isExporting, setIsExporting] = useState(false);
   const debouncedSearch = useDebounce(search, 500);
+  const { toast } = useToast();
 
   const { data: items, isLoading } = useItems({
     search: debouncedSearch,
     status: status === "all" ? undefined : status,
   });
+
+  const handleEbayExport = async () => {
+    if (!items || items.length === 0) {
+      toast({ title: "No items", description: "No items to export.", variant: "destructive" });
+      return;
+    }
+
+    const itemIds = items.map((item) => item.id);
+    setIsExporting(true);
+
+    try {
+      const response = await fetch("/api/csv/ebay-export", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ itemIds }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Export failed");
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `ebay-draft-listing-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast({ title: "Export complete", description: `Exported ${items.length} items to eBay CSV.` });
+    } catch (error) {
+      toast({ title: "Export failed", description: "Could not export items to CSV.", variant: "destructive" });
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   return (
     <LayoutShell>
@@ -27,12 +69,27 @@ export default function Inventory() {
             <h1 className="text-3xl font-display font-bold">Inventory</h1>
             <p className="text-muted-foreground mt-1">Manage and track all items in the system.</p>
           </div>
-          <Link href="/intake">
-            <Button size="lg" className="shadow-lg shadow-primary/20">
-              <PackagePlus className="mr-2 h-5 w-5" />
-              Add Item
+          <div className="flex gap-2">
+            <Button 
+              variant="outline"
+              onClick={handleEbayExport}
+              disabled={isExporting || !items?.length}
+              data-testid="button-ebay-export"
+            >
+              {isExporting ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Download className="mr-2 h-4 w-4" />
+              )}
+              Export to eBay CSV
             </Button>
-          </Link>
+            <Link href="/intake">
+              <Button size="lg" className="shadow-lg shadow-primary/20" data-testid="button-add-item">
+                <PackagePlus className="mr-2 h-5 w-5" />
+                Add Item
+              </Button>
+            </Link>
+          </div>
         </div>
 
         <div className="flex flex-col md:flex-row gap-4 bg-card p-4 rounded-2xl border border-border shadow-sm">
