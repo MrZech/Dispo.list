@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCreateItem } from "@/hooks/use-items";
 import { insertItemSchema } from "@shared/schema";
+import { EBAY_COMPUTER_CATEGORIES } from "@shared/ebay-categories";
 import { z } from "zod";
 import LayoutShell from "@/components/layout-shell";
 import { Button } from "@/components/ui/button";
@@ -24,7 +25,7 @@ import { useAuth } from "@/hooks/use-auth";
 
 const formSchema = insertItemSchema.pick({
   sku: true,
-  category: true,
+  ebayCategoryId: true,
   brand: true,
   model: true,
   source: true,
@@ -63,7 +64,7 @@ export default function Intake() {
     })),
     defaultValues: {
       sku: "",
-      category: "",
+      ebayCategoryId: "",
       brand: "",
       model: "",
       source: "",
@@ -138,22 +139,22 @@ export default function Intake() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField
                     control={form.control}
-                    name="category"
+                    name="ebayCategoryId"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Category</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormLabel>eBay Category</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value || ""}>
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select type" />
+                              <SelectValue placeholder="Select eBay category" />
                             </SelectTrigger>
                           </FormControl>
-                          <SelectContent className="bg-popover border-border shadow-md">
-                            <SelectItem value="Laptop">Laptop</SelectItem>
-                            <SelectItem value="Desktop">Desktop</SelectItem>
-                            <SelectItem value="Monitor">Monitor</SelectItem>
-                            <SelectItem value="Component">Component</SelectItem>
-                            <SelectItem value="Accessory">Accessory</SelectItem>
+                          <SelectContent className="bg-popover border-border shadow-md max-h-80">
+                            {EBAY_COMPUTER_CATEGORIES.map((cat) => (
+                              <SelectItem key={cat.id} value={cat.id}>
+                                {cat.name} ({cat.id})
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                         <FormMessage />

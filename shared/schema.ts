@@ -48,6 +48,9 @@ export const items = pgTable("items", {
   quantity: integer("quantity").default(1),
   upc: text("upc"),
   storageLocation: text("storage_location"),
+  listingTitle: text("listing_title"),
+  listingDescription: text("listing_description"),
+  sourceVendor: text("source_vendor"),
 
   // Chain of Custody
   intakeConfirmedBy: text("intake_confirmed_by").references(() => users.id),
