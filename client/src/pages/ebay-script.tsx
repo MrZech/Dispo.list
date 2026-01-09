@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Item } from "@shared/schema";
 import LayoutShell from "@/components/layout-shell";
@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Sparkles, Copy, RotateCcw, FileText, Loader2, CheckCircle2, Save } from "lucide-react";
+import { Copy, RotateCcw, FileText, Loader2, Save } from "lucide-react";
 
 export default function EbayScript() {
   const { toast } = useToast();
@@ -21,11 +21,9 @@ export default function EbayScript() {
   const [aiResponse, setAiResponse] = useState<string>("");
   const [savedScript, setSavedScript] = useState<string>("");
   const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false);
-  const [isGeneratingScript, setIsGeneratingScript] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [pastedSpecs, setPastedSpecs] = useState<string>("");
   const [customSku, setCustomSku] = useState<string>("");
-  const abortControllerRef = useRef<AbortController | null>(null);
 
   const { data: items } = useQuery<Item[]>({
     queryKey: ["/api/items"],
@@ -109,68 +107,6 @@ export default function EbayScript() {
     
     specs.additionalSpecs = rawSpecs;
     return specs;
-  };
-
-  const handleGenerateScript = async () => {
-    if (!generatedPrompt.trim()) {
-      toast({ title: "Error", description: "Generate a prompt first", variant: "destructive" });
-      return;
-    }
-
-    setIsGeneratingScript(true);
-    setAiResponse("");
-    abortControllerRef.current = new AbortController();
-
-    try {
-      const res = await fetch("/api/ebay-script/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: generatedPrompt }),
-        signal: abortControllerRef.current.signal,
-      });
-
-      if (!res.ok) throw new Error("Failed to generate script");
-
-      const reader = res.body?.getReader();
-      const decoder = new TextDecoder();
-
-      if (reader) {
-        let buffer = "";
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split("\n");
-          buffer = lines.pop() || "";
-
-          for (const line of lines) {
-            if (line.startsWith("data: ")) {
-              try {
-                const data = JSON.parse(line.slice(6));
-                if (data.content) {
-                  setAiResponse((prev) => prev + data.content);
-                }
-                if (data.done) {
-                  toast({ title: "Script Generated", description: "eBay listing script is ready" });
-                }
-                if (data.error) {
-                  throw new Error(data.error);
-                }
-              } catch (e) {
-                // Ignore parse errors for incomplete data
-              }
-            }
-          }
-        }
-      }
-    } catch (error: any) {
-      if (error.name !== "AbortError") {
-        toast({ title: "Error", description: "Failed to generate script", variant: "destructive" });
-      }
-    } finally {
-      setIsGeneratingScript(false);
-    }
   };
 
   const handleCopy = async (text: string, label: string) => {
@@ -324,11 +260,23 @@ Accessories: Original box, Manual"
 
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <span>Generated eBay Script:</span>
-                  {generatedPrompt && <Badge variant="secondary">Ready</Badge>}
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span>Generated Prompt:</span>
+                    {generatedPrompt && <Badge variant="secondary">Ready to Copy</Badge>}
+                  </div>
+                  {generatedPrompt && (
+                    <Button 
+                      size="sm"
+                      onClick={() => handleCopy(generatedPrompt, "Prompt")}
+                      data-testid="button-copy-prompt"
+                    >
+                      <Copy className="w-4 h-4 mr-1" />
+                      Copy Prompt
+                    </Button>
+                  )}
                 </CardTitle>
-                <CardDescription>This prompt will be sent to AI</CardDescription>
+                <CardDescription>Copy this prompt and paste it into ChatGPT or your preferred AI</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <Textarea 
@@ -339,57 +287,42 @@ Accessories: Original box, Manual"
                   readOnly
                   data-testid="textarea-prompt"
                 />
-                <div className="flex flex-wrap gap-2">
-                  <Button 
-                    onClick={handleGenerateScript} 
-                    disabled={isGeneratingScript || !generatedPrompt.trim()}
-                    data-testid="button-generate-listing"
-                  >
-                    {isGeneratingScript ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    ) : (
-                      <Sparkles className="w-4 h-4 mr-2" />
-                    )}
-                    Generate Final Listing
-                  </Button>
-                  <Button 
-                    variant="outline"
-                    onClick={handleSaveScript}
-                    disabled={!aiResponse || isSaving}
-                    data-testid="button-save-listing"
-                  >
-                    {isSaving ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    ) : (
-                      <Save className="w-4 h-4 mr-2" />
-                    )}
-                    {selectedItemId ? "Save to Item" : "Save Locally"}
-                  </Button>
-                  <Button 
-                    variant="outline"
-                    onClick={handleClear}
-                    data-testid="button-clear"
-                  >
-                    <RotateCcw className="w-4 h-4 mr-2" />
-                    Clear
-                  </Button>
-                </div>
+                <Button 
+                  variant="outline"
+                  onClick={handleClear}
+                  data-testid="button-clear"
+                >
+                  <RotateCcw className="w-4 h-4 mr-2" />
+                  Clear
+                </Button>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle>Paste ChatGPT Response:</CardTitle>
-                <CardDescription>If using external AI, paste the response here</CardDescription>
+                <CardTitle>Step 2: Paste AI Response</CardTitle>
+                <CardDescription>After getting the AI response, paste it here</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
                 <Textarea 
                   value={aiResponse}
                   onChange={(e) => setAiResponse(e.target.value)}
                   placeholder="Paste your ChatGPT response here..."
-                  className="min-h-[120px] font-mono text-sm"
+                  className="min-h-[150px] font-mono text-sm"
                   data-testid="textarea-paste-response"
                 />
+                <Button 
+                  onClick={handleSaveScript}
+                  disabled={!aiResponse || isSaving}
+                  data-testid="button-save-listing"
+                >
+                  {isSaving ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Save className="w-4 h-4 mr-2" />
+                  )}
+                  {selectedItemId ? "Save to Item" : "Save Locally"}
+                </Button>
               </CardContent>
             </Card>
           </div>
