@@ -24,6 +24,39 @@ export interface ItemSpecs {
   additionalSpecs?: string;
 }
 
+const DESCRIPTION_TEMPLATE = `Please Read This First
+This product previously belonged to someone who either upgraded or no longer needed it. Regardless of the reason, it has come to us with the hope of finding a new purpose. (Lucky you!)
+
+Descriptions
+We strive to provide accurate product descriptions by including the following details:
+The item's brand and model name or number.
+The item's physical condition.
+Basic BIOS or system information (if applicable).
+Testing status (if applicable—see below).
+Any included accessories (see below).
+
+The weight, length, width, height, circumference, volume, diameter, etc., were likely entered to calculate shipping. Therefore, if the item includes any packaging, that is what was measured, and the actual product may be smaller. If you have any questions, please contact us; we will get those exact measurements for you. 
+
+While we sometimes use AI to assist with descriptions, it may not always be as accurate as you might expect from a robot. Use the provided details to verify the product's suitability for your needs. Let us know if you spot an error—we appreciate your input!
+
+Images
+In most cases, the pictures in the listing are of the actual item for sale. However, we may use representative images instead for bulk listings or new, unused items in original packaging. Pay close attention to the photos to identify any physical defects and to confirm what is (or is not) included.
+
+Accessories
+While we wish every previous owner included power cables, connectors, chargers, dongles, keyboards, mice, and other accessories, this is rarely the case. Unless specifically mentioned in the product description or visible in the product photos, accessories are not included.
+
+Testing
+Although we aim to test all items thoroughly, there are instances where we may lack the technical expertise for certain equipment. In other cases, testing may not be possible due to missing cables or connectors. If an item cannot be tested but appears to be in working condition, we will label it "as-is" to indicate that its functionality cannot be guaranteed. These items are priced significantly lower, leaving the testing up to you.
+
+Storage
+We take data security seriously. Unless we specify something different in the product description, computers do not include hard disk drives (HDDs) or solid-state drives (SSDs). Exceptions will be noted in the description. In those cases, we obtained the previous owner's assurances that they had removed all sensitive data or that we had reformatted the storage media ourselves.
+
+Pricing
+Please note that prices are subject to change.
+
+Shipping Times
+Estimated shipping times are provided as general guidelines and may vary. Orders are processed in the order received, Monday through Friday, from 9:00 AM to 3:30 PM CST. Please remember that weather, carrier workloads, and holiday delivery schedules can affect delivery times.`;
+
 export function buildPromptFromSpecs(specs: ItemSpecs): string {
   const specLines: string[] = [];
   
@@ -50,29 +83,62 @@ Identify the relevant eBay category and its fields, and ONLY PROVIDE INFORMATION
 
 In your response, start with a recommended title for the eBay listing, but limit that title to 80 characters at most. 
 
-Next, construct an appropriate eBay item description by briefly explaining the product and the features it provides, if any. 
+Next, construct an appropriate eBay item description. The description MUST follow this exact template format, filling in the product-specific details where indicated:
 
-Each specification should be on its own line. 
+=== TEMPLATE START ===
+Please Read This First
+This product previously belonged to someone who either upgraded or no longer needed it. Regardless of the reason, it has come to us with the hope of finding a new purpose. (Lucky you!)
 
-Do not use any opinionated, convincing, or otherwise sales-y statements, claims, or phrases--only provide the unbiased facts and features about the product. Strive to ensure that all information you present is absolutely, undeniably correct. Corroborate your information across multiple sources. 
+[INSERT PRODUCT DETAILS HERE - Brief product overview with brand, model, key specs. Each specification on its own line. Include UPC and MPN if available.]
+
+Inventory Number: ${specs.sku}
+
+Descriptions
+We strive to provide accurate product descriptions by including the following details:
+The item's brand and model name or number.
+The item's physical condition.
+Basic BIOS or system information (if applicable).
+Testing status (if applicable—see below).
+Any included accessories (see below).
+
+The weight, length, width, height, circumference, volume, diameter, etc., were likely entered to calculate shipping. Therefore, if the item includes any packaging, that is what was measured, and the actual product may be smaller. If you have any questions, please contact us; we will get those exact measurements for you. 
+
+While we sometimes use AI to assist with descriptions, it may not always be as accurate as you might expect from a robot. Use the provided details to verify the product's suitability for your needs. Let us know if you spot an error—we appreciate your input!
+
+Images
+In most cases, the pictures in the listing are of the actual item for sale. However, we may use representative images instead for bulk listings or new, unused items in original packaging. Pay close attention to the photos to identify any physical defects and to confirm what is (or is not) included.
+
+Accessories
+While we wish every previous owner included power cables, connectors, chargers, dongles, keyboards, mice, and other accessories, this is rarely the case. Unless specifically mentioned in the product description or visible in the product photos, accessories are not included.
+
+Testing
+Although we aim to test all items thoroughly, there are instances where we may lack the technical expertise for certain equipment. In other cases, testing may not be possible due to missing cables or connectors. If an item cannot be tested but appears to be in working condition, we will label it "as-is" to indicate that its functionality cannot be guaranteed. These items are priced significantly lower, leaving the testing up to you.
+
+Storage
+We take data security seriously. Unless we specify something different in the product description, computers do not include hard disk drives (HDDs) or solid-state drives (SSDs). Exceptions will be noted in the description. In those cases, we obtained the previous owner's assurances that they had removed all sensitive data or that we had reformatted the storage media ourselves.
+
+Pricing
+Please note that prices are subject to change.
+
+Shipping Times
+Estimated shipping times are provided as general guidelines and may vary. Orders are processed in the order received, Monday through Friday, from 9:00 AM to 3:30 PM CST. Please remember that weather, carrier workloads, and holiday delivery schedules can affect delivery times.
+=== TEMPLATE END ===
+
+Do not use any opinionated, convincing, or otherwise sales-y statements in the product details section--only provide the unbiased facts and features about the product. Strive to ensure that all information you present is absolutely, undeniably correct.
 
 If the device requires an operating system, unless otherwise mentioned, do not include any mention of an operating system. 
 
-Unless otherwise mentioned do not refer to testing in any way.
-
 Unless otherwise specified above, the storage device is solid state and not a hard disk drive. 
 
-Be as inclusive and thorough as possible, providing all correct product information relevant to the eBay category. Be sure to include both its UPC and MPN. If any information differs from what is listed here, use this information as the correct information for this listing. 
+Be as inclusive and thorough as possible in the product details section, providing all correct product information relevant to the eBay category.
 
-Do not include your sources in the body or in the bulleted lists.
+Do not include your sources anywhere.
 
-Follow the description with the Inventory Number: "${specs.sku}"
+In a section AFTER the template, please recommend an eBay listing price based on the same item's past eBay sales prices. Also recommend the most economical way to send this item through USPS, which includes sufficient packaging, padding, and postage. Include product dimensions in inches.
 
-In a section below the description, please recommend an eBay listing price based on the same item's past eBay sales prices. Bonus points if you recommend the most economical way to send this item through USPS, which includes sufficient packaging, padding, and postage. Include product dimensions in inches.
+Never mention the condition in the description, and never ask me to choose from options in your response.
 
-Never mention the condition in this description, and never ask me to choose from options in your response.
-
-Do not reference any memory, previous chats, or past context in any way in your response. Reply as though you are the standard, blank-slate model of yourself. Thank you. Never mention warranties. Do NOT specify if it has a drive or not.`;
+Do not reference any memory, previous chats, or past context in any way in your response. Reply as though you are the standard, blank-slate model of yourself. Never mention warranties. Do NOT specify if it has a drive or not.`;
 }
 
 export function buildPromptFromItem(item: Item): string {
