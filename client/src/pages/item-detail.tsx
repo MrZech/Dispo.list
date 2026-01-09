@@ -15,6 +15,7 @@ import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   Package, Trash2, Camera, Maximize2, 
   CheckCircle2, AlertCircle, ArrowLeft, Save, 
@@ -40,7 +41,7 @@ export default function ItemDetail() {
 
   const updateItem = useMutation({
     mutationFn: async (updates: Partial<Item>) => {
-      const res = await apiRequest("PATCH", `/api/items/${itemId}`, updates);
+      const res = await apiRequest("PUT", `/api/items/${itemId}`, updates);
       return res.json();
     },
     onSuccess: () => {
@@ -99,7 +100,7 @@ export default function ItemDetail() {
         <div className="text-center py-20">
           <Package className="w-16 h-16 mx-auto text-muted-foreground/20 mb-4" />
           <h2 className="text-2xl font-bold">Item not found</h2>
-          <Button onClick={() => setLocation("/inventory")} variant="link">
+          <Button onClick={() => setLocation("/inventory")} variant="ghost">
             Back to Inventory
           </Button>
         </div>
@@ -178,35 +179,35 @@ export default function ItemDetail() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Storage Type & Size</Label>
+                    <Label>Storage Type</Label>
                     <Input 
                       defaultValue={item.storageType || ""} 
                       onBlur={(e) => handleUpdate("storageType", e.target.value)} 
-                      placeholder="e.g. 512GB NVMe SSD"
+                      placeholder="e.g. SSD, HDD"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>GPU / Graphics</Label>
+                    <Label>Storage Size</Label>
                     <Input 
-                      defaultValue={item.gpu || ""} 
-                      onBlur={(e) => handleUpdate("gpu", e.target.value)} 
-                      placeholder="e.g. Intel Iris Xe"
+                      defaultValue={item.storageSize || ""} 
+                      onBlur={(e) => handleUpdate("storageSize", e.target.value)} 
+                      placeholder="e.g. 512GB"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Display Resolution</Label>
+                    <Label>Battery Health</Label>
                     <Input 
-                      defaultValue={item.resolution || ""} 
-                      onBlur={(e) => handleUpdate("resolution", e.target.value)} 
-                      placeholder="e.g. 1920x1080"
+                      defaultValue={item.batteryHealth || ""} 
+                      onBlur={(e) => handleUpdate("batteryHealth", e.target.value)} 
+                      placeholder="e.g. Good, 85%"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Operating System</Label>
+                    <Label>Charger Included</Label>
                     <Input 
-                      defaultValue={item.os || ""} 
-                      onBlur={(e) => handleUpdate("os", e.target.value)} 
-                      placeholder="e.g. Windows 10 Pro"
+                      defaultValue={item.chargerIncluded || ""} 
+                      onBlur={(e) => handleUpdate("chargerIncluded", e.target.value)} 
+                      placeholder="Yes, No, Unknown"
                     />
                   </div>
                 </CardContent>
@@ -562,24 +563,3 @@ export default function ItemDetail() {
   );
 }
 
-// Helper components that were missing in previous attempt but are used in shadcn
-function Select({ children, defaultValue, onValueChange }: any) {
-  return (
-    <div className="relative">
-      <select 
-        defaultValue={defaultValue} 
-        onChange={(e) => onValueChange(e.target.value)}
-        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        {children}
-      </select>
-    </div>
-  );
-}
-
-function SelectTrigger({ children }: any) { return <>{children}</>; }
-function SelectValue({ placeholder }: any) { return <>{placeholder}</>; }
-function SelectContent({ children }: any) { return <>{children}</>; }
-function SelectItem({ value, children }: any) {
-  return <option value={value}>{children}</option>;
-}
