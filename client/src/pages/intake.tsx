@@ -14,8 +14,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, PackagePlus, X } from "lucide-react";
 import { useLocation } from "wouter";
-import { ObjectUploader } from "@/components/ObjectUploader";
-import { useUpload } from "@/hooks/use-upload";
+import { PhotoUploader } from "@/components/PhotoUploader";
 import { api, buildUrl } from "@shared/routes";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -41,7 +40,6 @@ export default function Intake() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const createItem = useCreateItem();
-  const { getUploadParameters } = useUpload();
   const [uploadedPhotos, setUploadedPhotos] = useState<{url: string, storageKey: string}[]>([]);
 
   const addPhotoMutation = useMutation({
@@ -283,26 +281,21 @@ export default function Intake() {
                           </Button>
                         </div>
                       ))}
-                      <ObjectUploader
-                        onGetUploadParameters={getUploadParameters}
+                      <PhotoUploader
                         maxNumberOfFiles={10}
-                        onComplete={(result) => {
-                          const successful = result.successful || [];
-                          successful.forEach(file => {
-                            const meta = file.meta as any;
-                            if (meta.objectPath) {
-                              setUploadedPhotos(prev => [...prev, {
-                                url: meta.objectPath,
-                                storageKey: file.name
-                              }]);
-                            }
+                        onComplete={(files) => {
+                          files.forEach(file => {
+                            setUploadedPhotos(prev => [...prev, {
+                              url: file.url,
+                              storageKey: file.filename
+                            }]);
                           });
                         }}
                         buttonClassName="aspect-square w-full h-full border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/50 transition-colors flex flex-col items-center justify-center gap-2 rounded-md"
                       >
                         <PackagePlus className="w-6 h-6 text-muted-foreground" />
                         <span className="text-xs text-muted-foreground font-medium">Add Photos</span>
-                      </ObjectUploader>
+                      </PhotoUploader>
                     </div>
                   </FormControl>
                   <FormMessage />
