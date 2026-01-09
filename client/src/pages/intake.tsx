@@ -19,6 +19,9 @@ import { api, buildUrl } from "@shared/routes";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 
+import { Checkbox } from "@/components/ui/checkbox";
+import { useAuth } from "@/hooks/use-auth";
+
 const formSchema = insertItemSchema.pick({
   sku: true,
   category: true,
@@ -33,6 +36,7 @@ type FormValues = z.infer<typeof formSchema>;
 export default function Intake() {
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const createItem = useCreateItem();
   const { getUploadParameters } = useUpload();
   const [uploadedPhotos, setUploadedPhotos] = useState<{url: string, storageKey: string}[]>([]);
@@ -48,8 +52,12 @@ export default function Intake() {
     }
   });
   
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<FormValues & { confirmed: boolean }>({
+    resolver: zodResolver(formSchema.extend({
+      confirmed: z.boolean().refine(val => val === true, {
+        message: "You must confirm the information is correct"
+      })
+    })),
     defaultValues: {
       sku: "",
       category: "",
@@ -57,15 +65,18 @@ export default function Intake() {
       model: "",
       source: "",
       intakeNotes: "",
+      confirmed: false,
     },
   });
 
-  const onSubmit = async (data: FormValues) => {
+  const onSubmit = async (data: FormValues & { confirmed: boolean }) => {
     try {
+      const { confirmed, ...itemData } = data;
       const newItem = await createItem.mutateAsync({
-        ...data,
+        ...itemData,
         status: "intake",
-        quantity: 1
+        quantity: 1,
+        intakeConfirmedBy: user?.id
       });
 
       // Add uploaded photos to the new item
@@ -251,6 +262,26 @@ export default function Intake() {
                   <FormMessage />
                   <p className="text-xs text-muted-foreground italic">Add at least one photo showing the item's condition.</p>
                 </FormItem>
+
+                <FormField
+                  control={form.control}
+                  name="confirmed"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-muted/30">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                          I confirm that I, <span className="font-bold underline text-primary">{user?.firstName} {user?.lastName}</span>, have put in this info correctly.
+                        </FormLabel>
+                      </div>
+                    </FormItem>
+                  )}
+                />
 
                 <Button 
                   type="submit" 

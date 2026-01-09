@@ -198,7 +198,8 @@ async function seedDatabase() {
       brand: "Dell",
       model: "XPS 13 9310",
       powerTest: true,
-      dropoffType: "pickup"
+      dropoffType: "pickup",
+      intakeConfirmedBy: undefined
     });
 
     await storage.createItem({

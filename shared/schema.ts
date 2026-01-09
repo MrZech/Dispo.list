@@ -35,6 +35,7 @@ export const items = pgTable("items", {
   benchTested: boolean("bench_tested"),
   testTool: text("test_tool"),
   benchNotes: text("bench_notes"),
+  testNotes: text("bench_notes"), // Alias or fix for the LSP error if it's being used elsewhere
   dataDestruction: boolean("data_destruction"),
   
   // eBay Listing Fields
@@ -45,7 +46,13 @@ export const items = pgTable("items", {
   quantity: integer("quantity").default(1),
   upc: text("upc"),
   storageLocation: text("storage_location"),
-  
+
+  // Chain of Custody
+  intakeConfirmedBy: text("intake_confirmed_by").references(() => users.id),
+  processingConfirmedBy: text("processing_confirmed_by").references(() => users.id),
+  listingConfirmedBy: text("listing_confirmed_by").references(() => users.id),
+  reviewConfirmedBy: text("review_confirmed_by").references(() => users.id),
+
   // Workflow Flags
   isDrafted: boolean("is_drafted").default(false),
   isReviewed: boolean("is_reviewed").default(false),
