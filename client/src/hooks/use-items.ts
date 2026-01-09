@@ -58,8 +58,8 @@ export function useCreateItem() {
 
       if (!res.ok) {
         if (res.status === 400) {
-          const error = api.items.create.responses[400].parse(await res.json());
-          throw new Error(error.message);
+          const errorData = await res.json();
+          throw new Error(errorData.message || "Validation error");
         }
         throw new Error("Failed to create item");
       }
@@ -97,8 +97,8 @@ export function useUpdateItem() {
 
       if (!res.ok) {
         if (res.status === 400) {
-          const error = api.items.update.responses[400].parse(await res.json());
-          throw new Error(error.message);
+          const errorData = await res.json();
+          throw new Error(errorData.message || "Validation error");
         }
         if (res.status === 404) throw new Error("Item not found");
         throw new Error("Failed to update item");

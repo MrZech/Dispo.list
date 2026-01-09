@@ -7,22 +7,12 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PackagePlus, Search, SlidersHorizontal, Loader2 } from "lucide-react";
 import { Link } from "wouter";
-import { useDebounce } from "@/hooks/use-debounce"; // We'll create this minimal hook inline for now or assume standard
-
-// Simple debounce hook
-function useDebounceValue<T>(value: T, delay: number): T {
-  const [debouncedValue, setDebouncedValue] = useState(value);
-  useState(() => {
-    const handler = setTimeout(() => setDebouncedValue(value), delay);
-    return () => clearTimeout(handler);
-  });
-  return debouncedValue;
-}
+import { useDebounce } from "@/hooks/use-debounce";
 
 export default function Inventory() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<string>("all");
-  const debouncedSearch = useDebounceValue(search, 500);
+  const debouncedSearch = useDebounce(search, 500);
 
   const { data: items, isLoading } = useItems({
     search: debouncedSearch,

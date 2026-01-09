@@ -22,9 +22,9 @@ export default {
           border: "hsl(var(--card-border) / <alpha-value>)",
         },
         popover: {
-          DEFAULT: "hsl(var(--popover) / <alpha-value>)",
-          foreground: "hsl(var(--popover-foreground) / <alpha-value>)",
-          border: "hsl(var(--popover-border) / <alpha-value>)",
+          DEFAULT: "hsl(var(--popover))",
+          foreground: "hsl(var(--popover-foreground))",
+          border: "hsl(var(--popover-border))",
         },
         primary: {
           DEFAULT: "hsl(var(--primary) / <alpha-value>)",

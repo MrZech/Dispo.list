@@ -11,6 +11,7 @@ import {
   User
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle";
 import {
   Sheet,
   SheetContent,
@@ -37,9 +38,12 @@ export default function LayoutShell({ children }: { children: ReactNode }) {
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full bg-slate-50 dark:bg-slate-900/50 border-r border-border">
-      <div className="p-6">
-        <h1 className="text-2xl font-display font-bold text-primary">DispoList</h1>
-        <p className="text-xs text-muted-foreground mt-1">Inventory Management</p>
+      <div className="p-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-display font-bold text-primary">DispoList</h1>
+          <p className="text-xs text-muted-foreground mt-1">Inventory Management</p>
+        </div>
+        <ThemeToggle />
       </div>
       
       <nav className="flex-1 px-4 space-y-1">
@@ -106,16 +110,19 @@ export default function LayoutShell({ children }: { children: ReactNode }) {
       {/* Mobile Header */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-md border-b border-border h-16 flex items-center justify-between px-4">
         <h1 className="text-xl font-display font-bold text-primary">DispoList</h1>
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <Menu className="h-6 w-6" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="p-0 w-64">
-            <SidebarContent />
-          </SheetContent>
-        </Sheet>
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Menu className="h-6 w-6" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="p-0 w-64">
+              <SidebarContent />
+            </SheetContent>
+          </Sheet>
+        </div>
       </div>
 
       {/* Main Content */}

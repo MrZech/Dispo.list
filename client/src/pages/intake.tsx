@@ -142,7 +142,7 @@ export default function Intake() {
                               <SelectValue placeholder="Select type" />
                             </SelectTrigger>
                           </FormControl>
-                          <SelectContent>
+                          <SelectContent className="bg-popover border-border shadow-md">
                             <SelectItem value="Laptop">Laptop</SelectItem>
                             <SelectItem value="Desktop">Desktop</SelectItem>
                             <SelectItem value="Monitor">Monitor</SelectItem>

@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useAuth } from "@/hooks/use-auth";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -108,7 +110,7 @@ export default function ItemDetail() {
                   <SelectTrigger className="w-[180px] h-8 text-xs font-semibold uppercase tracking-wider bg-secondary/50 border-secondary">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-popover border-popover-border">
                     <SelectItem value="intake">Intake</SelectItem>
                     <SelectItem value="processing">Processing</SelectItem>
                     <SelectItem value="drafted">Drafted</SelectItem>
@@ -215,7 +217,7 @@ export default function ItemDetail() {
                         <SelectTrigger>
                           <SelectValue placeholder="Type" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="bg-popover border-popover-border">
                           <SelectItem value="SSD">SSD</SelectItem>
                           <SelectItem value="HDD">HDD</SelectItem>
                           <SelectItem value="NVMe">NVMe</SelectItem>
@@ -420,7 +422,7 @@ export default function ItemDetail() {
                       <SelectTrigger>
                         <SelectValue placeholder="Select Condition" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="bg-popover border-popover-border">
                         <SelectItem value="1000">New</SelectItem>
                         <SelectItem value="3000">Used</SelectItem>
                         <SelectItem value="7000">For Parts / Not Working</SelectItem>
@@ -436,7 +438,7 @@ export default function ItemDetail() {
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="bg-popover border-popover-border">
                         <SelectItem value="FixedPrice">Fixed Price</SelectItem>
                         <SelectItem value="Auction">Auction</SelectItem>
                       </SelectContent>
