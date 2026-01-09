@@ -1,0 +1,77 @@
+Read the whole prompt closely: Exclude Sources from final result. Using search, gather the specifications and information for an eBay listing of "Brand: Dell
+Color: Black
+Form Factor: Small Form Factor (SFF)
+Model: OptiPlex 7050
+Type: Desktop
+Memory:
+  DIMMS #1:
+    DDR: DDR4
+    ECC: Non-ECC
+    Model: HMA851U6AFR6N-UH
+    Serial: 2951ACEC
+    Size: 4 GB
+    Speed: 2400 MHz
+    Type: DIMM
+    Vendor: Hynix Semiconductor (Hyundai Electronics)
+  DIMMS #2:
+    DDR: DDR4
+    ECC: Non-ECC
+    Model: HMA851U6AFR6N-UH
+    Serial: 2951AD06
+    Size: 4 GB
+    Speed: 2400 MHz
+    Type: DIMM
+    Vendor: Hynix Semiconductor (Hyundai Electronics)
+  DIMMS #3:
+    DDR: null
+    ECC: null
+    Model: null
+    Serial: null
+    Size: null
+    Speed: null
+    Type: null
+    Vendor: null
+  DIMMS #4:
+    DDR: null
+    ECC: null
+    Model: null
+    Serial: null
+    Size: null
+    Speed: null
+    Type: null
+    Vendor: null
+  RAM_Installed: 8.00 GB
+Power:
+  Has_Battery: false
+Processor: Intel(R) Core(TM) i5-7500 CPU @ 3.40GHz
+Serial_Number: D77TXM2
+Category: PC Desktops & All-In-Ones
+Description: Dell OptiPlex 7050 Desktop". 
+
+Identify the relevant eBay category and its fields, and ONLY PROVIDE INFORMATION THAT THE EBAY CATEGORY'S FIELDS REQUEST. Ensure that the information you provide is as up-to-date and factual as possible, reason through each piece of information, and determine if it is correct and should be included. Do not provide any extra information outside of what is being requested. DO NOT put the source links in the response. 
+
+In your response, start with a recommended title for the eBay listing, but limit that title to 80 characters at most. 
+
+Next, construct an appropriate eBay item description by briefly explaining the product and the features it provides, if any. 
+
+Each specification should be on its own line. 
+
+Do not use any opinionated, convincing, or otherwise sales-y statements, claims, or phrases--only provide the unbiased facts and features about the product. Strive to ensure that all information you present is absolutely, undeniably correct. Corroborate your information across multiple sources. 
+
+If the device requires an operating system, unless otherwise mentioned, do not include any mention of an operating system. 
+
+Unless otherwise mentioned do not refer to testing in any way.
+
+Unless otherwise specified above, the storage device is solid state and not a hard disk drive. 
+
+Be as inclusive and thorough as possible, providing all correct product information relevant to the eBay category. Be sure to include both its UPC and MPN. If any information differs from what is listed here, use this information as the correct information for this listing. 
+
+Do not include your sources in the body or in the bulleted lists.
+
+Follow the description with the Inventory Number: "DT-0325-534"
+
+In a section below the description, please recommend an eBay listing price based on the same item's past eBay sales prices. Bonus points if you recommend the most economical way to send this item through USPS, which includes sufficient packaging, padding, and postage. Include product dimensions in inches.
+
+Never mention the condition in this description, and never ask me to choose from options in your response.
+
+Do not reference any memory, previous chats, or past context in any way in your response. Reply as though you are the standard, blank-slate model of yourself. Thank you. Never mention warranties. Do NOT specify if it has a drive or not.
