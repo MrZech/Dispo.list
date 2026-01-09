@@ -10,7 +10,7 @@ import {
 
 export interface IStorage {
   // Items
-  getItems(options?: { status?: string, search?: string, limit?: number, offset?: number }): Promise<Item[]>;
+  getItems(options?: { status?: string, search?: string, limit?: number, offset?: number }): Promise<ItemWithPhotos[]>;
   getItem(id: number): Promise<ItemWithPhotos | undefined>;
   getItemBySku(sku: string): Promise<Item | undefined>;
   getItemsByIds(ids: number[]): Promise<ItemWithPhotos[]>;
@@ -31,7 +31,7 @@ export interface IStorage {
 
 export class DatabaseStorage implements IStorage {
   // Items
-  async getItems(options?: { status?: string, search?: string, limit?: number, offset?: number }): Promise<Item[]> {
+  async getItems(options?: { status?: string, search?: string, limit?: number, offset?: number }): Promise<ItemWithPhotos[]> {
     let query = db.select().from(items);
     
     // Add filters here if needed (drizzle query builder)
@@ -40,7 +40,23 @@ export class DatabaseStorage implements IStorage {
       // Note: simple implementation for now, complete later with full query builder
     }
     
-    return await query.orderBy(desc(items.intakeDate));
+    const allItems = await query.orderBy(desc(items.intakeDate));
+    
+    if (allItems.length === 0) return [];
+    
+    // Get all photos for these items in one query
+    const itemIds = allItems.map(item => item.id);
+    const allPhotos = await db
+      .select()
+      .from(photos)
+      .where(inArray(photos.itemId, itemIds))
+      .orderBy(photos.sortOrder);
+    
+    // Map photos to items
+    return allItems.map(item => ({
+      ...item,
+      photos: allPhotos.filter(p => p.itemId === item.id)
+    }));
   }
 
   async getItem(id: number): Promise<ItemWithPhotos | undefined> {
