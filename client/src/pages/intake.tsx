@@ -196,7 +196,7 @@ export default function Intake() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Dropoff Type</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select onValueChange={field.onChange} defaultValue={field.value || undefined}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue />
@@ -346,7 +346,7 @@ export default function Intake() {
                       </FormControl>
                       <div className="space-y-1 leading-none">
                         <FormLabel className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                          I confirm that I, <span className="font-bold underline text-primary">{user?.firstName} {user?.lastName}</span>, have put in this info correctly.
+                          I confirm that I, <span className="font-bold underline text-primary">{user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : user?.username}</span>, have put in this info correctly.
                         </FormLabel>
                       </div>
                     </FormItem>

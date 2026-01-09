@@ -318,7 +318,7 @@ export default function ItemDetail() {
                   />
                   <div className="space-y-1 leading-none">
                     <Label htmlFor="specs-confirmed" className="text-sm font-medium leading-none cursor-pointer">
-                      I confirm that I, <span className="font-bold underline text-primary">{user?.firstName} {user?.lastName}</span>, have verified these specs.
+                      I confirm that I, <span className="font-bold underline text-primary">{user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : user?.username}</span>, have verified these specs.
                     </Label>
                   </div>
                 </div>
@@ -521,7 +521,7 @@ export default function ItemDetail() {
                   />
                   <div className="space-y-1 leading-none">
                     <Label htmlFor="listing-confirmed" className="text-sm font-medium leading-none cursor-pointer">
-                      I confirm that I, <span className="font-bold underline text-primary">{user?.firstName} {user?.lastName}</span>, have completed this listing draft.
+                      I confirm that I, <span className="font-bold underline text-primary">{user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : user?.username}</span>, have completed this listing draft.
                     </Label>
                   </div>
                 </div>
@@ -540,7 +540,7 @@ export default function ItemDetail() {
                   />
                   <div className="space-y-1 leading-none">
                     <Label htmlFor="review-confirmed" className="text-sm font-medium leading-none cursor-pointer">
-                      I confirm that I, <span className="font-bold underline text-primary">{user?.firstName} {user?.lastName}</span>, have completed the second review of this item.
+                      I confirm that I, <span className="font-bold underline text-primary">{user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : user?.username}</span>, have completed the second review of this item.
                     </Label>
                   </div>
                 </div>
