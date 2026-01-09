@@ -21,6 +21,10 @@ export interface ItemSpecs {
   processor?: string;
   memory?: string;
   hasBattery?: boolean;
+  batteryHealth?: string;
+  includesCharger?: boolean;
+  includesCables?: string;
+  accessories?: string;
   additionalSpecs?: string;
 }
 
@@ -66,33 +70,40 @@ export function buildPromptFromSpecs(specs: ItemSpecs): string {
   if (specs.color) specLines.push(`Color: ${specs.color}`);
   if (specs.formFactor) specLines.push(`Form Factor: ${specs.formFactor}`);
   if (specs.cpu || specs.processor) specLines.push(`Processor: ${specs.cpu || specs.processor}`);
-  if (specs.ram || specs.memory) specLines.push(`RAM_Installed: ${specs.ram || specs.memory}`);
+  if (specs.ram || specs.memory) specLines.push(`RAM: ${specs.ram || specs.memory}`);
   if (specs.storageType) specLines.push(`Storage Type: ${specs.storageType}`);
   if (specs.storageSize) specLines.push(`Storage Size: ${specs.storageSize}`);
-  if (specs.serialNumber) specLines.push(`Serial_Number: ${specs.serialNumber}`);
-  if (specs.hasBattery !== undefined) specLines.push(`Has_Battery: ${specs.hasBattery}`);
+  if (specs.serialNumber) specLines.push(`Serial Number: ${specs.serialNumber}`);
+  if (specs.hasBattery !== undefined) specLines.push(`Has Battery: ${specs.hasBattery ? 'Yes' : 'No'}`);
+  if (specs.batteryHealth) specLines.push(`Battery Health: ${specs.batteryHealth}`);
+  if (specs.includesCharger !== undefined) specLines.push(`Includes Charger: ${specs.includesCharger ? 'Yes' : 'No'}`);
+  if (specs.includesCables) specLines.push(`Included Cables: ${specs.includesCables}`);
+  if (specs.accessories) specLines.push(`Accessories Included: ${specs.accessories}`);
   if (specs.additionalSpecs) specLines.push(specs.additionalSpecs);
   
   const specsBlock = specLines.join('\n');
   
-  return `Read the whole prompt closely: Exclude Sources from final result. Using search, gather the specifications and information for an eBay listing of "${specsBlock}
-Category: ${specs.category || 'Electronics'}
-Description: ${specs.brand || ''} ${specs.model || ''} ${specs.category || 'Device'}". 
+  return `Generate a concise eBay listing for this item. ONLY include information that is explicitly provided below - do not add extra specs or features not listed here.
 
-Identify the relevant eBay category and its fields, and ONLY PROVIDE INFORMATION THAT THE EBAY CATEGORY'S FIELDS REQUEST. Ensure that the information you provide is as up-to-date and factual as possible, reason through each piece of information, and determine if it is correct and should be included. Do not provide any extra information outside of what is being requested. DO NOT put the source links in the response. 
+PROVIDED SPECS:
+${specsBlock}
+SKU: ${specs.sku}
 
-In your response, start with a recommended title for the eBay listing, but limit that title to 80 characters at most. 
+INSTRUCTIONS:
+1. Start with a recommended eBay title (max 80 characters) using only the brand, model, and key provided specs.
 
-Next, construct an appropriate eBay item description. The description MUST follow this exact template format, filling in the product-specific details where indicated:
+2. Generate ONLY the product details section - a brief, factual description with the provided specs. Keep it concise. Include:
+   - Brand and model
+   - Only the specs explicitly provided above
+   - Battery health if provided
+   - Charger/cables/accessories if specified
+   - UPC and MPN only if you can verify them
 
-=== TEMPLATE START ===
-Please Read This First
-This product previously belonged to someone who either upgraded or no longer needed it. Regardless of the reason, it has come to us with the hope of finding a new purpose. (Lucky you!)
+3. After the product details, include: Inventory Number: ${specs.sku}
 
-[INSERT PRODUCT DETAILS HERE - Brief product overview with brand, model, key specs. Each specification on its own line. Include UPC and MPN if available.]
+4. Then include this EXACT boilerplate text (copy it exactly as shown):
 
-Inventory Number: ${specs.sku}
-
+---
 Descriptions
 We strive to provide accurate product descriptions by including the following details:
 The item's brand and model name or number.
@@ -101,7 +112,7 @@ Basic BIOS or system information (if applicable).
 Testing status (if applicable—see below).
 Any included accessories (see below).
 
-The weight, length, width, height, circumference, volume, diameter, etc., were likely entered to calculate shipping. Therefore, if the item includes any packaging, that is what was measured, and the actual product may be smaller. If you have any questions, please contact us; we will get those exact measurements for you. 
+The weight, length, width, height, circumference, volume, diameter, etc., were likely entered to calculate shipping. Therefore, if the item includes any packaging, that is what was measured, and the actual product may be smaller. If you have any questions, please contact us; we will get those exact measurements for you.
 
 While we sometimes use AI to assist with descriptions, it may not always be as accurate as you might expect from a robot. Use the provided details to verify the product's suitability for your needs. Let us know if you spot an error—we appreciate your input!
 
@@ -122,23 +133,19 @@ Please note that prices are subject to change.
 
 Shipping Times
 Estimated shipping times are provided as general guidelines and may vary. Orders are processed in the order received, Monday through Friday, from 9:00 AM to 3:30 PM CST. Please remember that weather, carrier workloads, and holiday delivery schedules can affect delivery times.
-=== TEMPLATE END ===
+---
 
-Do not use any opinionated, convincing, or otherwise sales-y statements in the product details section--only provide the unbiased facts and features about the product. Strive to ensure that all information you present is absolutely, undeniably correct.
+5. After the boilerplate, add a brief section with:
+   - Suggested eBay price based on similar sold items
+   - Recommended USPS shipping method with estimated cost
 
-If the device requires an operating system, unless otherwise mentioned, do not include any mention of an operating system. 
-
-Unless otherwise specified above, the storage device is solid state and not a hard disk drive. 
-
-Be as inclusive and thorough as possible in the product details section, providing all correct product information relevant to the eBay category.
-
-Do not include your sources anywhere.
-
-In a section AFTER the template, please recommend an eBay listing price based on the same item's past eBay sales prices. Also recommend the most economical way to send this item through USPS, which includes sufficient packaging, padding, and postage. Include product dimensions in inches.
-
-Never mention the condition in the description, and never ask me to choose from options in your response.
-
-Do not reference any memory, previous chats, or past context in any way in your response. Reply as though you are the standard, blank-slate model of yourself. Never mention warranties. Do NOT specify if it has a drive or not.`;
+RULES:
+- Be concise - only include provided information
+- No sales language or opinions
+- No condition mentions
+- No warranty mentions
+- No operating system unless specified
+- Do not invent specs not provided above`;
 }
 
 export function buildPromptFromItem(item: Item): string {
@@ -154,13 +161,20 @@ export function buildPromptFromItem(item: Item): string {
   });
 }
 
+const SYSTEM_PROMPT = `You generate concise eBay listings. Rules:
+- ONLY include specs explicitly provided - never add extras
+- Be brief and factual - no sales language
+- Include battery health, charger, cables, accessories ONLY if provided
+- Copy the boilerplate template sections exactly as given
+- Keep the product details section short - just the facts`;
+
 export async function generateEbayScript(prompt: string): Promise<string> {
   const response = await openai.chat.completions.create({
     model: "gpt-5.1",
     messages: [
       {
         role: "system",
-        content: "You are a helpful assistant that generates accurate eBay listing information based on product specifications. Be factual and concise. Never make up information - only provide verified specifications."
+        content: SYSTEM_PROMPT
       },
       {
         role: "user",
@@ -182,7 +196,7 @@ export async function generateEbayScriptStreaming(
     messages: [
       {
         role: "system",
-        content: "You are a helpful assistant that generates accurate eBay listing information based on product specifications. Be factual and concise. Never make up information - only provide verified specifications."
+        content: SYSTEM_PROMPT
       },
       {
         role: "user",

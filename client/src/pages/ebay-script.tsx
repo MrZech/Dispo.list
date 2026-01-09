@@ -98,7 +98,11 @@ export default function EbayScript() {
       else if (key === "processor") specs.processor = value;
       else if (key === "raminstalled" || key === "ram") specs.memory = value;
       else if (key === "serialnumber") specs.serialNumber = value;
-      else if (key === "hasbattery") specs.hasBattery = value.toLowerCase() === "true";
+      else if (key === "hasbattery") specs.hasBattery = value.toLowerCase() === "true" || value.toLowerCase() === "yes";
+      else if (key === "batteryhealth" || key === "batterycondition") specs.batteryHealth = value;
+      else if (key === "includescharger" || key === "charger") specs.includesCharger = value.toLowerCase() === "true" || value.toLowerCase() === "yes";
+      else if (key === "includescables" || key === "cables") specs.includesCables = value;
+      else if (key === "accessories" || key === "included" || key === "includedaccessories") specs.accessories = value;
     }
     
     specs.additionalSpecs = rawSpecs;
@@ -255,13 +259,16 @@ export default function EbayScript() {
                         value={pastedSpecs}
                         onChange={(e) => setPastedSpecs(e.target.value)}
                         placeholder="Brand: Dell
-Color: Black
-Form Factor: Small Form Factor (SFF)
 Model: OptiPlex 7050
 Type: Desktop
-Processor: Intel(R) Core(TM) i5-7500 CPU @ 3.40GHz
-RAM_Installed: 8.00 GB
-..."
+Processor: Intel Core i5-7500
+RAM: 8 GB
+Color: Black
+Form Factor: SFF
+Battery Health: 85%
+Includes Charger: Yes
+Cables: USB-C cable, Power cord
+Accessories: Original box, Manual"
                         className="min-h-[200px] font-mono text-sm"
                         data-testid="textarea-specs"
                       />
