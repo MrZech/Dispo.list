@@ -190,11 +190,20 @@ export async function registerRoutes(
         return res.status(400).json({ message: "No items found for the provided IDs" });
       }
 
-      const csvContent = generateEbayDraftCSV(items);
+      const result = generateEbayDraftCSV(items);
+
+      if (result.exportedCount === 0) {
+        return res.status(400).json({ 
+          message: "No items have the required Category ID and Condition ID for eBay export",
+          skipped: result.skippedSkus
+        });
+      }
 
       res.setHeader('Content-Type', 'text/csv');
       res.setHeader('Content-Disposition', `attachment; filename="ebay-draft-listing-${new Date().toISOString().slice(0, 10)}.csv"`);
-      res.send(csvContent);
+      res.setHeader('X-Exported-Count', String(result.exportedCount));
+      res.setHeader('X-Skipped-Count', String(result.skippedCount));
+      res.send(result.csv);
 
     } catch (err) {
       console.error("eBay CSV Export Error:", err);

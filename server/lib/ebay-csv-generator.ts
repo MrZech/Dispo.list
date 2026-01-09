@@ -1,7 +1,14 @@
 import { stringify } from 'csv-stringify/sync';
 import type { ItemWithPhotos } from "@shared/schema";
 
-export function generateEbayDraftCSV(items: ItemWithPhotos[]): string {
+export interface EbayExportResult {
+  csv: string;
+  exportedCount: number;
+  skippedCount: number;
+  skippedSkus: string[];
+}
+
+export function generateEbayDraftCSV(items: ItemWithPhotos[]): EbayExportResult {
   const infoLines = [
     '#INFO,Version=0.0.2,Template= eBay-draft-listings-template_US,,,,,,,,',
     '#INFO Action and Category ID are required fields. 1) Set Action to Draft 2) Please find the category ID for your listings here: https://pages.ebay.com/sellerinformation/news/categorychanges.html,,,,,,,,,,',
@@ -10,7 +17,20 @@ export function generateEbayDraftCSV(items: ItemWithPhotos[]): string {
     'Action(SiteID=US|Country=US|Currency=USD|Version=1193|CC=UTF-8),Custom label (SKU),Category ID,Title,UPC,Price,Quantity,Item photo URL,Condition ID,Description,Format',
   ];
 
-  const dataRows = items.map(item => {
+  const validItems: ItemWithPhotos[] = [];
+  const skippedSkus: string[] = [];
+
+  for (const item of items) {
+    if (!item.ebayCategoryId) {
+      skippedSkus.push(item.sku + ' (missing Category ID)');
+    } else if (!item.ebayConditionId) {
+      skippedSkus.push(item.sku + ' (missing Condition ID)');
+    } else {
+      validItems.push(item);
+    }
+  }
+
+  const dataRows = validItems.map(item => {
     const photoUrls = (item.photos || []).map(p => p.url).join('|');
     
     const title = item.listingTitle || buildListingTitle(item);
@@ -39,7 +59,14 @@ export function generateEbayDraftCSV(items: ItemWithPhotos[]): string {
     }).join(',');
   });
 
-  return infoLines.join('\n') + '\n' + dataRows.join('\n');
+  const csv = infoLines.join('\n') + '\n' + dataRows.join('\n');
+
+  return {
+    csv,
+    exportedCount: validItems.length,
+    skippedCount: skippedSkus.length,
+    skippedSkus
+  };
 }
 
 function buildListingTitle(item: ItemWithPhotos): string {

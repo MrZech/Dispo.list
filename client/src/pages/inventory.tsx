@@ -40,8 +40,21 @@ export default function Inventory() {
       });
 
       if (!response.ok) {
-        throw new Error("Export failed");
+        const errorData = await response.json();
+        if (errorData.skipped) {
+          toast({ 
+            title: "Export blocked", 
+            description: `Items need Category ID and Condition ID: ${errorData.skipped.join(', ')}`, 
+            variant: "destructive" 
+          });
+        } else {
+          toast({ title: "Export failed", description: errorData.message || "Could not export items.", variant: "destructive" });
+        }
+        return;
       }
+
+      const exportedCount = response.headers.get('X-Exported-Count');
+      const skippedCount = response.headers.get('X-Skipped-Count');
 
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
@@ -53,7 +66,11 @@ export default function Inventory() {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
 
-      toast({ title: "Export complete", description: `Exported ${items.length} items to eBay CSV.` });
+      let message = `Exported ${exportedCount} items to eBay CSV.`;
+      if (skippedCount && parseInt(skippedCount) > 0) {
+        message += ` ${skippedCount} items skipped (missing Category or Condition).`;
+      }
+      toast({ title: "Export complete", description: message });
     } catch (error) {
       toast({ title: "Export failed", description: "Could not export items to CSV.", variant: "destructive" });
     } finally {
