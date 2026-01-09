@@ -28,6 +28,8 @@ const formSchema = insertItemSchema.pick({
   brand: true,
   model: true,
   source: true,
+  sourceLocation: true,
+  dropoffType: true,
   intakeNotes: true,
 });
 
@@ -52,11 +54,12 @@ export default function Intake() {
     }
   });
   
-  const form = useForm<FormValues & { confirmed: boolean }>({
+  const form = useForm<FormValues & { confirmed: boolean, decision: "research" | "scrap" }>({
     resolver: zodResolver(formSchema.extend({
       confirmed: z.boolean().refine(val => val === true, {
         message: "You must confirm the information is correct"
-      })
+      }),
+      decision: z.enum(["research", "scrap"]).default("research")
     })),
     defaultValues: {
       sku: "",
@@ -64,17 +67,20 @@ export default function Intake() {
       brand: "",
       model: "",
       source: "",
+      sourceLocation: "",
+      dropoffType: "dropoff",
       intakeNotes: "",
       confirmed: false,
+      decision: "research"
     },
   });
 
-  const onSubmit = async (data: FormValues & { confirmed: boolean }) => {
+  const onSubmit = async (data: FormValues & { confirmed: boolean, decision: "research" | "scrap" }) => {
     try {
-      const { confirmed, ...itemData } = data;
+      const { confirmed, decision, ...itemData } = data;
       const newItem = await createItem.mutateAsync({
         ...itemData,
-        status: "intake",
+        status: decision === "scrap" ? "scrap" : "intake",
         quantity: 1,
         intakeConfirmedBy: user?.id
       });
@@ -160,10 +166,49 @@ export default function Intake() {
                     name="source"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Source</FormLabel>
+                        <FormLabel>Source (Company/Person)</FormLabel>
                         <FormControl>
-                          <Input placeholder="e.g. Donation, Purchase" {...field} value={field.value || ''} />
+                          <Input placeholder="e.g. ABC Corp, John Doe" {...field} value={field.value || ""} />
                         </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="sourceLocation"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Source Location</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g. Warehouse 1, Site B" {...field} value={field.value || ""} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="dropoffType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Dropoff Type</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent className="bg-popover border-border shadow-md">
+                            <SelectItem value="dropoff">Dropoff</SelectItem>
+                            <SelectItem value="pickup">Pickup</SelectItem>
+                            <SelectItem value="shipment">Shipment</SelectItem>
+                          </SelectContent>
+                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -178,7 +223,7 @@ export default function Intake() {
                       <FormItem>
                         <FormLabel>Brand</FormLabel>
                         <FormControl>
-                          <Input placeholder="e.g. Dell, HP, Apple" {...field} value={field.value || ''} />
+                          <Input placeholder="e.g. Dell, HP, Apple" {...field} value={field.value || ""} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -192,7 +237,7 @@ export default function Intake() {
                       <FormItem>
                         <FormLabel>Model</FormLabel>
                         <FormControl>
-                          <Input placeholder="e.g. Latitude 5420" {...field} value={field.value || ''} />
+                          <Input placeholder="e.g. Latitude 5420" {...field} value={field.value || ""} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -211,7 +256,7 @@ export default function Intake() {
                           placeholder="Condition notes, included accessories, visible damage..." 
                           className="min-h-[100px]"
                           {...field} 
-                          value={field.value || ''}
+                          value={field.value || ""}
                         />
                       </FormControl>
                       <FormMessage />
@@ -262,6 +307,37 @@ export default function Intake() {
                   <FormMessage />
                   <p className="text-xs text-muted-foreground italic">Add at least one photo showing the item's condition.</p>
                 </FormItem>
+
+                <FormField
+                  control={form.control}
+                  name="decision"
+                  render={({ field }) => (
+                    <FormItem className="space-y-3">
+                      <FormLabel>Decision</FormLabel>
+                      <FormControl>
+                        <div className="flex gap-4">
+                          <Button
+                            type="button"
+                            variant={field.value === "research" ? "default" : "outline"}
+                            className="flex-1"
+                            onClick={() => field.onChange("research")}
+                          >
+                            Research
+                          </Button>
+                          <Button
+                            type="button"
+                            variant={field.value === "scrap" ? "destructive" : "outline"}
+                            className="flex-1"
+                            onClick={() => field.onChange("scrap")}
+                          >
+                            Scrap
+                          </Button>
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
                 <FormField
                   control={form.control}

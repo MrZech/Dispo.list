@@ -58,6 +58,7 @@ export default function Inventory() {
                 <SelectItem value="ready">Ready to List</SelectItem>
                 <SelectItem value="listed">Listed</SelectItem>
                 <SelectItem value="sold">Sold</SelectItem>
+                <SelectItem value="scrap">Scrap</SelectItem>
               </SelectContent>
             </Select>
           </div>

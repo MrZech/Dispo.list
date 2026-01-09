@@ -34,8 +34,9 @@ export const items = pgTable("items", {
   chargerIncluded: text("charger_included"), // Yes, No, Unknown
   benchTested: boolean("bench_tested"),
   testTool: text("test_tool"),
+  magicOctopusRun: boolean("magic_octopus_run").default(false),
   benchNotes: text("bench_notes"),
-  testNotes: text("bench_notes"), // Alias or fix for the LSP error if it's being used elsewhere
+  testNotes: text("test_notes"), 
   dataDestruction: boolean("data_destruction"),
   
   // eBay Listing Fields
@@ -43,6 +44,7 @@ export const items = pgTable("items", {
   ebayConditionId: text("ebay_condition_id"),
   listingFormat: text("listing_format"), // FixedPrice, Auction
   listPrice: decimal("list_price"),
+  researchPrice: decimal("research_price"),
   quantity: integer("quantity").default(1),
   upc: text("upc"),
   storageLocation: text("storage_location"),
@@ -56,6 +58,8 @@ export const items = pgTable("items", {
   // Workflow Flags
   isDrafted: boolean("is_drafted").default(false),
   isReviewed: boolean("is_reviewed").default(false),
+  isTemplateDrafted: boolean("is_template_drafted").default(false),
+  isSecondReviewCompleted: boolean("is_second_review_completed").default(false),
   
   // Metadata
   createdBy: text("created_by").references(() => users.id),
