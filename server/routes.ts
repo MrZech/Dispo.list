@@ -8,6 +8,12 @@ import { registerObjectStorageRoutes } from "./replit_integrations/object_storag
 
 import { generateCSV } from "./lib/csv-generator";
 import { generateEbayDraftCSV } from "./lib/ebay-csv-generator";
+import { 
+  buildPromptFromSpecs, 
+  buildPromptFromItem, 
+  generateEbayScriptStreaming,
+  type ItemSpecs 
+} from "./lib/ebay-script-generator";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -211,6 +217,68 @@ export async function registerRoutes(
         return res.status(400).json({ message: "Invalid input" });
       }
       res.status(500).json({ message: "Failed to generate eBay CSV" });
+    }
+  });
+
+  // === EBAY SCRIPT GENERATOR ===
+
+  // Generate prompt from item ID
+  app.get("/api/ebay-script/prompt/:itemId", async (req, res) => {
+    try {
+      const itemId = Number(req.params.itemId);
+      const item = await storage.getItem(itemId);
+      if (!item) {
+        return res.status(404).json({ message: "Item not found" });
+      }
+      const prompt = buildPromptFromItem(item);
+      res.json({ prompt, item });
+    } catch (error) {
+      console.error("Error generating prompt:", error);
+      res.status(500).json({ message: "Failed to generate prompt" });
+    }
+  });
+
+  // Generate prompt from raw specs (for pasted Magic Octopus data)
+  app.post("/api/ebay-script/prompt", async (req, res) => {
+    try {
+      const specs = req.body as ItemSpecs;
+      if (!specs.sku) {
+        return res.status(400).json({ message: "SKU is required" });
+      }
+      const prompt = buildPromptFromSpecs(specs);
+      res.json({ prompt });
+    } catch (error) {
+      console.error("Error generating prompt:", error);
+      res.status(500).json({ message: "Failed to generate prompt" });
+    }
+  });
+
+  // Generate eBay script via AI (streaming)
+  app.post("/api/ebay-script/generate", async (req, res) => {
+    try {
+      const { prompt } = req.body;
+      if (!prompt) {
+        return res.status(400).json({ message: "Prompt is required" });
+      }
+
+      res.setHeader("Content-Type", "text/event-stream");
+      res.setHeader("Cache-Control", "no-cache");
+      res.setHeader("Connection", "keep-alive");
+
+      await generateEbayScriptStreaming(prompt, (content) => {
+        res.write(`data: ${JSON.stringify({ content })}\n\n`);
+      });
+
+      res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
+      res.end();
+    } catch (error) {
+      console.error("Error generating eBay script:", error);
+      if (res.headersSent) {
+        res.write(`data: ${JSON.stringify({ error: "Failed to generate script" })}\n\n`);
+        res.end();
+      } else {
+        res.status(500).json({ message: "Failed to generate script" });
+      }
     }
   });
 

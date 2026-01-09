@@ -8,7 +8,8 @@ import {
   Settings, 
   LogOut, 
   Menu,
-  User
+  User,
+  Sparkles
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -33,6 +34,7 @@ export default function LayoutShell({ children }: { children: ReactNode }) {
     { name: 'Dashboard', href: '/', icon: LayoutDashboard },
     { name: 'Intake', href: '/intake', icon: PackagePlus },
     { name: 'Inventory', href: '/inventory', icon: Boxes },
+    { name: 'eBay Script', href: '/ebay-script', icon: Sparkles },
     { name: 'Settings', href: '/settings', icon: Settings },
   ];
 

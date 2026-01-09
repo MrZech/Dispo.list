@@ -7,6 +7,9 @@ import { z } from "zod";
 export * from "./models/auth";
 import { users } from "./models/auth";
 
+// Export Chat Models
+export * from "./models/chat";
+
 // === TABLE DEFINITIONS ===
 
 export const items = pgTable("items", {

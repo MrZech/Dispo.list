@@ -11,6 +11,7 @@ import Dashboard from "@/pages/dashboard";
 import Intake from "@/pages/intake";
 import Inventory from "@/pages/inventory";
 import ItemDetail from "@/pages/item-detail";
+import EbayScript from "@/pages/ebay-script";
 import Settings from "@/pages/settings";
 import Login from "@/pages/login";
 import NotFound from "@/pages/not-found";
@@ -53,6 +54,9 @@ function Router() {
       </Route>
       <Route path="/settings">
         <ProtectedRoute component={Settings} />
+      </Route>
+      <Route path="/ebay-script">
+        <ProtectedRoute component={EbayScript} />
       </Route>
       
       <Route component={NotFound} />

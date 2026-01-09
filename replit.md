@@ -54,6 +54,17 @@ Key database tables:
 - **Condition IDs**: Standard eBay condition codes (1000 = New, 3000 = Used, 7000 = For Parts)
 - **CSV Export**: `/api/csv/ebay-export` generates eBay-compatible draft listing CSV matching their exact template format
 - **Auto-generation**: Listing titles and HTML descriptions are auto-generated from specs if not manually entered
+- **eBay Script Generator**: AI-powered listing description generator at `/ebay-script`
+  - Takes item specs from database or pasted Magic Octopus output
+  - Generates detailed prompt for AI to create eBay-ready listing content
+  - Uses Replit AI Integrations (OpenAI) for streaming AI responses
+  - Produces recommended titles (80 char limit), descriptions, pricing, and shipping info
+
+### AI Integration
+- **Provider**: Replit AI Integrations (OpenAI-compatible API)
+- **No API Key Required**: Uses Replit's managed OpenAI access, billed to credits
+- **Script Generator**: `server/lib/ebay-script-generator.ts` builds prompts and handles streaming responses
+- **Model**: gpt-5.1 for chat completions
 
 ### Authentication
 - **Provider**: Replit Auth (OpenID Connect)
