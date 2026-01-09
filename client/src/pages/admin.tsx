@@ -84,7 +84,7 @@ function UserManagement() {
   });
 
   const createUserMutation = useMutation({
-    mutationFn: (data: any) => apiRequest("/api/admin/users", "POST", data),
+    mutationFn: (data: any) => apiRequest("POST", "/api/admin/users", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
       setShowCreateDialog(false);
@@ -97,7 +97,7 @@ function UserManagement() {
 
   const toggleUserMutation = useMutation({
     mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) =>
-      apiRequest(`/api/admin/users/${id}`, "PUT", { isActive }),
+      apiRequest("PUT", `/api/admin/users/${id}`, { isActive }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
       toast({ title: "User updated" });
@@ -105,7 +105,7 @@ function UserManagement() {
   });
 
   const deleteUserMutation = useMutation({
-    mutationFn: (id: string) => apiRequest(`/api/admin/users/${id}`, "DELETE"),
+    mutationFn: (id: string) => apiRequest("DELETE", `/api/admin/users/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
       toast({ title: "User deleted" });
@@ -117,7 +117,7 @@ function UserManagement() {
 
   const resetPasswordMutation = useMutation({
     mutationFn: ({ id, newPassword }: { id: string; newPassword: string }) =>
-      apiRequest(`/api/admin/users/${id}/reset-password`, "POST", { newPassword }),
+      apiRequest("POST", `/api/admin/users/${id}/reset-password`, { newPassword }),
     onSuccess: () => {
       setShowResetPasswordDialog(null);
       setNewPassword("");
@@ -339,7 +339,7 @@ function DatabaseManagement() {
   });
 
   const runQueryMutation = useMutation({
-    mutationFn: (query: string) => apiRequest("/api/admin/database/query", "POST", { query }),
+    mutationFn: (query: string) => apiRequest("POST", "/api/admin/database/query", { query }),
     onSuccess: (data: any) => {
       setQueryResult(data);
       setQueryError(null);
