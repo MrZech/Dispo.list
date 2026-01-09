@@ -3,8 +3,10 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { api } from "@shared/routes";
 import { z } from "zod";
-import { setupAuth, registerAuthRoutes } from "./replit_integrations/auth";
-import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
+import { setupLocalAuth, registerLocalAuthRoutes, ensureDefaultAdmin, isAuthenticated, isAdmin } from "./auth";
+import { registerLocalStorageRoutes } from "./local-storage";
+import { db } from "./db";
+import { sql } from "drizzle-orm";
 
 import { generateCSV } from "./lib/csv-generator";
 import { generateEbayDraftCSV } from "./lib/ebay-csv-generator";
@@ -19,10 +21,10 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  // Register Auth and Object Storage
-  await setupAuth(app);
-  registerAuthRoutes(app);
-  registerObjectStorageRoutes(app);
+  // Register Local Auth and File Storage
+  await setupLocalAuth(app);
+  registerLocalAuthRoutes(app);
+  registerLocalStorageRoutes(app);
 
   // === ITEMS ===
   
@@ -282,13 +284,87 @@ export async function registerRoutes(
     }
   });
 
-  // Initialize seed data
-  seedDatabase();
+  // === ADMIN DATABASE ROUTES ===
+
+  // Get database tables info (admin only)
+  app.get("/api/admin/database/tables", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const result = await db.execute(sql`
+        SELECT table_name 
+        FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        ORDER BY table_name
+      `);
+      res.json(result.rows);
+    } catch (err) {
+      console.error("Database tables error:", err);
+      res.status(500).json({ message: "Failed to get tables" });
+    }
+  });
+
+  // Get table row counts (admin only)
+  app.get("/api/admin/database/stats", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const tables = ['items', 'photos', 'users', 'sessions', 'export_profiles'];
+      const stats: Record<string, number> = {};
+      
+      for (const table of tables) {
+        try {
+          const result = await db.execute(sql.raw(`SELECT COUNT(*) as count FROM "${table}"`));
+          stats[table] = Number((result.rows[0] as any)?.count || 0);
+        } catch {
+          stats[table] = 0;
+        }
+      }
+      
+      res.json(stats);
+    } catch (err) {
+      console.error("Database stats error:", err);
+      res.status(500).json({ message: "Failed to get database stats" });
+    }
+  });
+
+  // Run read-only SQL query (admin only)
+  app.post("/api/admin/database/query", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const { query } = req.body;
+      
+      if (!query || typeof query !== "string") {
+        return res.status(400).json({ message: "Query is required" });
+      }
+      
+      // Basic safety check - only allow SELECT queries
+      const normalizedQuery = query.trim().toLowerCase();
+      if (!normalizedQuery.startsWith("select")) {
+        return res.status(400).json({ message: "Only SELECT queries are allowed" });
+      }
+      
+      // Block dangerous keywords
+      const dangerousKeywords = ['drop', 'delete', 'update', 'insert', 'alter', 'truncate', 'create'];
+      for (const keyword of dangerousKeywords) {
+        if (normalizedQuery.includes(keyword)) {
+          return res.status(400).json({ message: `Query contains blocked keyword: ${keyword}` });
+        }
+      }
+      
+      const result = await db.execute(sql.raw(query));
+      res.json({ rows: result.rows, rowCount: result.rows.length });
+    } catch (err) {
+      console.error("Database query error:", err);
+      res.status(500).json({ message: `Query failed: ${(err as Error).message}` });
+    }
+  });
+
+  // Initialize database
+  await seedDatabase();
 
   return httpServer;
 }
 
 async function seedDatabase() {
+  // Ensure default admin exists
+  await ensureDefaultAdmin();
+  
   const existingItems = await storage.getItems();
   if (existingItems.length === 0) {
     console.log("Seeding database with initial items...");
