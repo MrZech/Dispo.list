@@ -2,25 +2,12 @@ import { stringify } from 'csv-stringify/sync';
 import type { ItemWithPhotos } from "@shared/schema";
 
 export function generateEbayDraftCSV(items: ItemWithPhotos[]): string {
-  const infoRows = [
-    ['#INFO', 'Version=0.0.2', 'Template= eBay-draft-listings-template_US', '', '', '', '', '', '', '', ''],
-    ['#INFO', 'Action and Category ID are required fields. 1) Set Action to Draft 2) Please find the category ID for your listings here: https://pages.ebay.com/sellerinformation/news/categorychanges.html', '', '', '', '', '', '', '', '', ''],
-    ['#INFO', "After you've successfully uploaded your draft from the Seller Hub Reports tab, complete your drafts to active listings here: https://www.ebay.com/sh/lst/drafts", '', '', '', '', '', '', '', '', ''],
-    ['#INFO', '', '', '', '', '', '', '', '', '', ''],
-  ];
-
-  const header = [
-    'Action(SiteID=US|Country=US|Currency=USD|Version=1193|CC=UTF-8)',
-    'Custom label (SKU)',
-    'Category ID',
-    'Title',
-    'UPC',
-    'Price',
-    'Quantity',
-    'Item photo URL',
-    'Condition ID',
-    'Description',
-    'Format'
+  const infoLines = [
+    '#INFO,Version=0.0.2,Template= eBay-draft-listings-template_US,,,,,,,,',
+    '#INFO Action and Category ID are required fields. 1) Set Action to Draft 2) Please find the category ID for your listings here: https://pages.ebay.com/sellerinformation/news/categorychanges.html,,,,,,,,,,',
+    '"#INFO After you\'ve successfully uploaded your draft from the Seller Hub Reports tab, complete your drafts to active listings here: https://www.ebay.com/sh/lst/drafts",,,,,,,,,,',
+    '#INFO,,,,,,,,,,',
+    'Action(SiteID=US|Country=US|Currency=USD|Version=1193|CC=UTF-8),Custom label (SKU),Category ID,Title,UPC,Price,Quantity,Item photo URL,Condition ID,Description,Format',
   ];
 
   const dataRows = items.map(item => {
@@ -29,7 +16,7 @@ export function generateEbayDraftCSV(items: ItemWithPhotos[]): string {
     const title = item.listingTitle || buildListingTitle(item);
     const description = item.listingDescription || buildListingDescription(item);
     
-    return [
+    const row = [
       'Draft',
       item.sku || '',
       item.ebayCategoryId || '',
@@ -38,22 +25,21 @@ export function generateEbayDraftCSV(items: ItemWithPhotos[]): string {
       item.listPrice ? String(item.listPrice) : '',
       item.quantity ? String(item.quantity) : '1',
       photoUrls,
-      item.ebayConditionId || '3000',
+      item.ebayConditionId || '',
       description,
       item.listingFormat || 'FixedPrice'
     ];
+    
+    return row.map(val => {
+      if (val === '') return '';
+      if (val.includes(',') || val.includes('"') || val.includes('\n') || val.includes('<')) {
+        return '"' + val.replace(/"/g, '""') + '"';
+      }
+      return val;
+    }).join(',');
   });
 
-  const allRows = [
-    ...infoRows,
-    header,
-    ...dataRows
-  ];
-
-  return stringify(allRows, {
-    quoted: false,
-    quoted_string: true,
-  });
+  return infoLines.join('\n') + '\n' + dataRows.join('\n');
 }
 
 function buildListingTitle(item: ItemWithPhotos): string {
