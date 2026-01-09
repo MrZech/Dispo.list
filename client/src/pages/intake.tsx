@@ -11,8 +11,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, PackagePlus } from "lucide-react";
+import { Loader2, PackagePlus, X } from "lucide-react";
 import { useLocation } from "wouter";
+import { ObjectUploader } from "@/components/ObjectUploader";
+import { useUpload } from "@/hooks/use-upload";
+import { api, buildUrl } from "@shared/routes";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 
 const formSchema = insertItemSchema.pick({
   sku: true,
@@ -27,7 +32,21 @@ type FormValues = z.infer<typeof formSchema>;
 
 export default function Intake() {
   const [, setLocation] = useLocation();
+  const queryClient = useQueryClient();
   const createItem = useCreateItem();
+  const { getUploadParameters } = useUpload();
+  const [uploadedPhotos, setUploadedPhotos] = useState<{url: string, storageKey: string}[]>([]);
+
+  const addPhotoMutation = useMutation({
+    mutationFn: async ({ itemId, url, storageKey }: { itemId: number, url: string, storageKey: string }) => {
+      return apiRequest("POST", buildUrl(api.photos.create.path, { itemId }), {
+        url,
+        storageKey,
+        type: "intake",
+        sortOrder: uploadedPhotos.length
+      });
+    }
+  });
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -48,6 +67,19 @@ export default function Intake() {
         status: "intake",
         quantity: 1
       });
+
+      // Add uploaded photos to the new item
+      for (const photo of uploadedPhotos) {
+        await addPhotoMutation.mutateAsync({
+          itemId: newItem.id,
+          url: photo.url,
+          storageKey: photo.storageKey
+        });
+      }
+
+      // Important: Force a cache invalidation for the item list
+      queryClient.invalidateQueries({ queryKey: ["/api/items"] });
+
       setLocation(`/items/${newItem.id}`);
     } catch (error) {
       console.error(error);
@@ -176,16 +208,60 @@ export default function Intake() {
                   )}
                 />
 
+                <FormItem className="space-y-4">
+                  <FormLabel>Intake Photos</FormLabel>
+                  <FormControl>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-2">
+                      {uploadedPhotos.map((photo, index) => (
+                        <div key={index} className="aspect-square rounded-md border border-border overflow-hidden relative group">
+                          <img src={photo.url} alt={`Intake ${index}`} className="w-full h-full object-cover" />
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="icon"
+                            className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+                            onClick={() => setUploadedPhotos(prev => prev.filter((_, i) => i !== index))}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                      <ObjectUploader
+                        onGetUploadParameters={getUploadParameters}
+                        maxNumberOfFiles={10}
+                        onComplete={(result) => {
+                          const successful = result.successful || [];
+                          successful.forEach(file => {
+                            const meta = file.meta as any;
+                            if (meta.objectPath) {
+                              setUploadedPhotos(prev => [...prev, {
+                                url: meta.objectPath,
+                                storageKey: file.name
+                              }]);
+                            }
+                          });
+                        }}
+                        buttonClassName="aspect-square w-full h-full border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/50 transition-colors flex flex-col items-center justify-center gap-2 rounded-md"
+                      >
+                        <PackagePlus className="w-6 h-6 text-muted-foreground" />
+                        <span className="text-xs text-muted-foreground font-medium">Add Photos</span>
+                      </ObjectUploader>
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                  <p className="text-xs text-muted-foreground italic">Add at least one photo showing the item's condition.</p>
+                </FormItem>
+
                 <Button 
                   type="submit" 
                   size="lg" 
                   className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-lg shadow-primary/25"
-                  disabled={createItem.isPending}
+                  disabled={createItem.isPending || addPhotoMutation.isPending}
                 >
-                  {createItem.isPending ? (
+                  {createItem.isPending || addPhotoMutation.isPending ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Creating Record...
+                      {createItem.isPending ? "Creating Record..." : "Uploading Photos..."}
                     </>
                   ) : (
                     "Create Item & Continue"
