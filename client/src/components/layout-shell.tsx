@@ -9,7 +9,8 @@ import {
   LogOut, 
   Menu,
   User,
-  Sparkles
+  Sparkles,
+  Shield
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -28,7 +29,7 @@ import { cn } from "@/lib/utils";
 
 export default function LayoutShell({ children }: { children: ReactNode }) {
   const [location] = useLocation();
-  const { user, logout } = useAuth();
+  const { user, logout, isAdmin } = useAuth();
 
   const navigation = [
     { name: 'Dashboard', href: '/', icon: LayoutDashboard },
@@ -36,6 +37,7 @@ export default function LayoutShell({ children }: { children: ReactNode }) {
     { name: 'Inventory', href: '/inventory', icon: Boxes },
     { name: 'eBay Script', href: '/ebay-script', icon: Sparkles },
     { name: 'Settings', href: '/settings', icon: Settings },
+    ...(isAdmin ? [{ name: 'Admin', href: '/admin', icon: Shield }] : []),
   ];
 
   const SidebarContent = () => (
@@ -85,8 +87,14 @@ export default function LayoutShell({ children }: { children: ReactNode }) {
                   )}
                 </div>
                 <div className="text-left hidden md:block">
-                  <p className="text-sm font-medium leading-none">{user?.firstName} {user?.lastName}</p>
-                  <p className="text-xs text-muted-foreground truncate max-w-[120px]">{user?.email}</p>
+                  <p className="text-sm font-medium leading-none">
+                    {user?.firstName && user?.lastName 
+                      ? `${user.firstName} ${user.lastName}` 
+                      : user?.username}
+                  </p>
+                  <p className="text-xs text-muted-foreground truncate max-w-[120px]">
+                    {user?.role === 'admin' ? 'Administrator' : user?.email || 'User'}
+                  </p>
                 </div>
               </div>
             </Button>

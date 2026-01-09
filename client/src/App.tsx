@@ -13,6 +13,7 @@ import Inventory from "@/pages/inventory";
 import ItemDetail from "@/pages/item-detail";
 import EbayScript from "@/pages/ebay-script";
 import Settings from "@/pages/settings";
+import Admin from "@/pages/admin";
 import Login from "@/pages/login";
 import NotFound from "@/pages/not-found";
 
@@ -37,7 +38,6 @@ function ProtectedRoute({ component: Component, ...rest }: { component: any, pat
 function Router() {
   return (
     <Switch>
-      <Route path="/api/login" component={() => { window.location.href = "/api/login"; return null; }} />
       <Route path="/login" component={Login} />
       
       <Route path="/">
@@ -57,6 +57,9 @@ function Router() {
       </Route>
       <Route path="/ebay-script">
         <ProtectedRoute component={EbayScript} />
+      </Route>
+      <Route path="/admin">
+        <ProtectedRoute component={Admin} />
       </Route>
       
       <Route component={NotFound} />
