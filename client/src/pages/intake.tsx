@@ -40,13 +40,13 @@ export default function Intake() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const createItem = useCreateItem();
-  const [uploadedPhotos, setUploadedPhotos] = useState<{url: string, storageKey: string}[]>([]);
+  const [uploadedPhotos, setUploadedPhotos] = useState<{url: string, filename: string}[]>([]);
 
   const addPhotoMutation = useMutation({
-    mutationFn: async ({ itemId, url, storageKey }: { itemId: number, url: string, storageKey: string }) => {
+    mutationFn: async ({ itemId, url, filename }: { itemId: number, url: string, filename: string }) => {
       return apiRequest("POST", buildUrl(api.photos.create.path, { itemId }), {
         url,
-        storageKey,
+        storageKey: filename,
         type: "intake",
         sortOrder: uploadedPhotos.length
       });
@@ -89,7 +89,7 @@ export default function Intake() {
         await addPhotoMutation.mutateAsync({
           itemId: newItem.id,
           url: photo.url,
-          storageKey: photo.storageKey
+          filename: photo.filename
         });
       }
 
@@ -287,7 +287,7 @@ export default function Intake() {
                           files.forEach(file => {
                             setUploadedPhotos(prev => [...prev, {
                               url: file.url,
-                              storageKey: file.filename
+                              filename: file.filename
                             }]);
                           });
                         }}
