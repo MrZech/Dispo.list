@@ -103,7 +103,9 @@ INSTRUCTIONS:
 
 4. Then include this EXACT boilerplate text (copy it exactly as shown):
 
----
+Please Read This First
+This product previously belonged to someone who either upgraded or no longer needed it. Regardless of the reason, it has come to us with the hope of finding a new purpose. (Lucky you!)
+
 Descriptions
 We strive to provide accurate product descriptions by including the following details:
 The item's brand and model name or number.
@@ -112,7 +114,7 @@ Basic BIOS or system information (if applicable).
 Testing status (if applicable—see below).
 Any included accessories (see below).
 
-The weight, length, width, height, circumference, volume, diameter, etc., were likely entered to calculate shipping. Therefore, if the item includes any packaging, that is what was measured, and the actual product may be smaller. If you have any questions, please contact us; we will get those exact measurements for you.
+The weight, length, width, height, circumference, volume, diameter, etc., were likely entered to calculate shipping. Therefore, if the item includes any packaging, that is what was measured, and the actual product may be smaller. If you have any questions, please contact us; we will get those exact measurements for you. 
 
 While we sometimes use AI to assist with descriptions, it may not always be as accurate as you might expect from a robot. Use the provided details to verify the product's suitability for your needs. Let us know if you spot an error—we appreciate your input!
 
@@ -133,7 +135,8 @@ Please note that prices are subject to change.
 
 Shipping Times
 Estimated shipping times are provided as general guidelines and may vary. Orders are processed in the order received, Monday through Friday, from 9:00 AM to 3:30 PM CST. Please remember that weather, carrier workloads, and holiday delivery schedules can affect delivery times.
----
+
+—
 
 5. After the boilerplate, add a brief section with:
    - Suggested eBay price based on similar sold items
