@@ -92,16 +92,7 @@ SKU: ${specs.sku}
 INSTRUCTIONS:
 1. Start with a recommended eBay title (max 80 characters) using only the brand, model, and key provided specs.
 
-2. Generate ONLY the product details section - a brief, factual description with the provided specs. Keep it concise. Include:
-   - Brand and model
-   - Only the specs explicitly provided above
-   - Battery health if provided
-   - Charger/cables/accessories if specified
-   - UPC and MPN only if you can verify them
-
-3. After the product details, include: Inventory Number: ${specs.sku}
-
-4. Then include this EXACT boilerplate text (copy it exactly as shown):
+2. FIRST, include this EXACT boilerplate text (copy it exactly as shown):
 
 Please Read This First
 This product previously belonged to someone who either upgraded or no longer needed it. Regardless of the reason, it has come to us with the hope of finding a new purpose. (Lucky you!)
@@ -136,9 +127,16 @@ Please note that prices are subject to change.
 Shipping Times
 Estimated shipping times are provided as general guidelines and may vary. Orders are processed in the order received, Monday through Friday, from 9:00 AM to 3:30 PM CST. Please remember that weather, carrier workloads, and holiday delivery schedules can affect delivery times.
 
-—
+3. THEN, add a "Product Details" section with:
+   - Brand and model
+   - Only the specs explicitly provided above
+   - Battery health if provided
+   - Charger/cables/accessories if specified
+   - UPC and MPN only if you can verify them
 
-5. After the boilerplate, add a brief section with:
+4. End the Product Details section with: Inventory Number: ${specs.sku}
+
+5. After the product details, add a brief section with:
    - Suggested eBay price based on similar sold items
    - Recommended USPS shipping method with estimated cost
 
