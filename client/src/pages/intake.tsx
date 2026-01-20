@@ -135,25 +135,36 @@ export default function Intake() {
       @page { size: landscape; margin: 0.5in; }
       * { box-sizing: border-box; }
       body { margin: 0; font-family: Arial, sans-serif; color: #111; }
-      .sheet { border: 2px solid #111; padding: 24px; height: 7.5in; display: flex; flex-direction: column; justify-content: space-between; }
-      .header { font-size: 20px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
-      .sku { font-size: 52px; font-weight: 700; letter-spacing: 0.02em; }
+      .sheet { border: 2px solid #111; padding: 24px; height: 7.5in; display: flex; flex-direction: column; gap: 18px; }
+      .header { display: flex; align-items: center; justify-content: space-between; }
+      .title { font-size: 20px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+      .meta { font-size: 12px; color: #555; text-transform: uppercase; letter-spacing: 0.08em; }
+      .sku-box { border: 3px solid #111; padding: 18px; }
+      .sku-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.12em; color: #444; }
+      .sku-value { font-size: 52px; font-weight: 700; letter-spacing: 0.02em; margin-top: 8px; }
       .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-      .label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: #444; }
-      .value { font-size: 22px; font-weight: 600; }
-      .footer { font-size: 12px; color: #555; }
+      .field { border: 2px solid #111; padding: 14px; min-height: 90px; }
+      .label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #444; }
+      .value { font-size: 22px; font-weight: 600; margin-top: 10px; }
+      .footer { font-size: 12px; color: #555; border-top: 1px solid #999; padding-top: 8px; }
     </style>
   </head>
   <body>
     <div class="sheet">
-      <div class="header">DispoList Intake Sheet</div>
-      <div class="sku">${escapeHtml(sku)}</div>
+      <div class="header">
+        <div class="title">DispoList Intake Sheet</div>
+        <div class="meta">Internal Use</div>
+      </div>
+      <div class="sku-box">
+        <div class="sku-label">SKU</div>
+        <div class="sku-value">${escapeHtml(sku)}</div>
+      </div>
       <div class="grid">
-        <div>
+        <div class="field">
           <div class="label">Source Location</div>
           <div class="value">${escapeHtml(sourceLocation)}</div>
         </div>
-        <div>
+        <div class="field">
           <div class="label">Intake Date</div>
           <div class="value">${escapeHtml(intakeDate)}</div>
         </div>
