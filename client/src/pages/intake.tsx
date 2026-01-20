@@ -115,6 +115,8 @@ export default function Intake() {
     const values = form.getValues();
     const sku = (values.sku || "").trim();
     const sourceLocation = (values.sourceLocation || "").trim();
+    const brand = (values.brand || "").trim();
+    const model = (values.model || "").trim();
 
     if (!sku || !sourceLocation) {
       toast({
@@ -146,6 +148,8 @@ export default function Intake() {
       .field { border: 2px solid #111; padding: 14px; min-height: 90px; }
       .label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #444; }
       .value { font-size: 22px; font-weight: 600; margin-top: 10px; }
+      .notes { border: 2px solid #111; padding: 14px; min-height: 180px; }
+      .notes .value { margin-top: 14px; color: #777; font-weight: 400; }
       .footer { font-size: 12px; color: #555; border-top: 1px solid #999; padding-top: 8px; }
     </style>
   </head>
@@ -168,6 +172,18 @@ export default function Intake() {
           <div class="label">Intake Date</div>
           <div class="value">${escapeHtml(intakeDate)}</div>
         </div>
+        <div class="field">
+          <div class="label">Brand</div>
+          <div class="value">${escapeHtml(brand || "________________")}</div>
+        </div>
+        <div class="field">
+          <div class="label">Model</div>
+          <div class="value">${escapeHtml(model || "________________")}</div>
+        </div>
+      </div>
+      <div class="notes">
+        <div class="label">Description / Condition Notes</div>
+        <div class="value">Write notes here...</div>
       </div>
       <div class="footer">Tape this sheet to the item. No photos included.</div>
     </div>
