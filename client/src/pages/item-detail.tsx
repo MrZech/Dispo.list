@@ -25,6 +25,17 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 
+const STATUS_OPTIONS = [
+  { value: "intake", label: "Intake" },
+  { value: "processing", label: "Processing" },
+  { value: "drafted", label: "Drafted" },
+  { value: "review", label: "Review" },
+  { value: "ready", label: "Ready to List" },
+  { value: "listed", label: "Listed" },
+  { value: "sold", label: "Sold" },
+  { value: "scrap", label: "Scrap" },
+];
+
 export default function ItemDetail() {
   const { id } = useParams<{ id: string }>();
   const itemId = parseInt(id || "0");
@@ -124,8 +135,27 @@ export default function ItemDetail() {
             </Button>
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <Badge variant="outline" className="font-mono">{item.sku}</Badge>
-                <Badge className="capitalize">{item.status}</Badge>
+                <Input
+                  defaultValue={item.sku}
+                  onBlur={(e) => handleUpdate("sku", e.target.value)}
+                  className="h-7 w-[180px] font-mono text-xs"
+                  aria-label="SKU"
+                />
+                <Select
+                  value={item.status}
+                  onValueChange={(val) => handleUpdate("status", val)}
+                >
+                  <SelectTrigger className="h-7 px-2 text-xs">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STATUS_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <h1 className="text-2xl font-bold">{item.brand} {item.model}</h1>
             </div>

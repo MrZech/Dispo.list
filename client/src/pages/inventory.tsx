@@ -36,7 +36,13 @@ export default function Inventory() {
       return;
     }
 
-    const itemIds = items.map((item) => item.id);
+    const readyItems = items.filter((item) => item.status === "ready");
+    if (readyItems.length === 0) {
+      toast({ title: "No ready items", description: "Only items marked Ready to List can be exported.", variant: "destructive" });
+      return;
+    }
+
+    const itemIds = readyItems.map((item) => item.id);
     setIsExporting(true);
 
     try {

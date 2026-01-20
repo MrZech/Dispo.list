@@ -230,7 +230,12 @@ export async function registerRoutes(
         return res.status(400).json({ message: "No items found for the provided IDs" });
       }
 
-      const result = generateEbayDraftCSV(items);
+      const readyItems = items.filter((item) => item.status === "ready");
+      if (readyItems.length === 0) {
+        return res.status(400).json({ message: "No items are marked Ready to List for eBay export" });
+      }
+
+      const result = generateEbayDraftCSV(readyItems);
 
       if (result.exportedCount === 0) {
         return res.status(400).json({ 

@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, PackagePlus, X } from "lucide-react";
+import { Loader2, PackagePlus, Printer, X } from "lucide-react";
 import { useLocation } from "wouter";
 import { PhotoUploader } from "@/components/PhotoUploader";
 import { api, buildUrl } from "@shared/routes";
@@ -21,6 +21,14 @@ import { apiRequest } from "@/lib/queryClient";
 
 import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/hooks/use-auth";
+import { useToast } from "@/hooks/use-toast";
+
+const escapeHtml = (value: string) =>
+  value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 
 const formSchema = insertItemSchema.pick({
   sku: true,
@@ -39,6 +47,7 @@ export default function Intake() {
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const { toast } = useToast();
   const createItem = useCreateItem();
   const [uploadedPhotos, setUploadedPhotos] = useState<{url: string, filename: string}[]>([]);
 
@@ -100,6 +109,77 @@ export default function Intake() {
     } catch (error) {
       console.error(error);
     }
+  };
+
+  const handlePrint = () => {
+    const values = form.getValues();
+    const sku = (values.sku || "").trim();
+    const sourceLocation = (values.sourceLocation || "").trim();
+
+    if (!sku || !sourceLocation) {
+      toast({
+        title: "Missing info",
+        description: "Enter SKU and Source Location before printing.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const intakeDate = new Date().toLocaleDateString();
+    const html = `<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>DispoList Intake Sheet</title>
+    <style>
+      @page { size: landscape; margin: 0.5in; }
+      * { box-sizing: border-box; }
+      body { margin: 0; font-family: Arial, sans-serif; color: #111; }
+      .sheet { border: 2px solid #111; padding: 24px; height: 7.5in; display: flex; flex-direction: column; justify-content: space-between; }
+      .header { font-size: 20px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+      .sku { font-size: 52px; font-weight: 700; letter-spacing: 0.02em; }
+      .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+      .label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: #444; }
+      .value { font-size: 22px; font-weight: 600; }
+      .footer { font-size: 12px; color: #555; }
+    </style>
+  </head>
+  <body>
+    <div class="sheet">
+      <div class="header">DispoList Intake Sheet</div>
+      <div class="sku">${escapeHtml(sku)}</div>
+      <div class="grid">
+        <div>
+          <div class="label">Source Location</div>
+          <div class="value">${escapeHtml(sourceLocation)}</div>
+        </div>
+        <div>
+          <div class="label">Intake Date</div>
+          <div class="value">${escapeHtml(intakeDate)}</div>
+        </div>
+      </div>
+      <div class="footer">Tape this sheet to the item. No photos included.</div>
+    </div>
+  </body>
+</html>`;
+
+    const printWindow = window.open("", "_blank", "width=1000,height=700");
+    if (!printWindow) {
+      toast({
+        title: "Popup blocked",
+        description: "Allow popups to print the intake sheet.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    printWindow.document.open();
+    printWindow.document.write(html);
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.onload = () => {
+      printWindow.print();
+    };
   };
 
   return (
@@ -353,21 +433,27 @@ export default function Intake() {
                   )}
                 />
 
-                <Button 
-                  type="submit" 
-                  size="lg" 
-                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-lg shadow-primary/25"
-                  disabled={createItem.isPending || addPhotoMutation.isPending}
-                >
-                  {createItem.isPending || addPhotoMutation.isPending ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      {createItem.isPending ? "Creating Record..." : "Uploading Photos..."}
-                    </>
-                  ) : (
-                    "Create Item & Continue"
-                  )}
-                </Button>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <Button type="button" variant="outline" size="lg" onClick={handlePrint}>
+                    <Printer className="mr-2 h-4 w-4" />
+                    Print Intake Sheet
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    size="lg" 
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-lg shadow-primary/25"
+                    disabled={createItem.isPending || addPhotoMutation.isPending}
+                  >
+                    {createItem.isPending || addPhotoMutation.isPending ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        {createItem.isPending ? "Creating Record..." : "Uploading Photos..."}
+                      </>
+                    ) : (
+                      "Create Item & Continue"
+                    )}
+                  </Button>
+                </div>
               </form>
             </Form>
           </CardContent>
