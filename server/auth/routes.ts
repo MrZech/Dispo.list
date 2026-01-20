@@ -13,6 +13,7 @@ import {
   isAuthenticated,
   isAdmin,
 } from "./local-auth";
+import { logAudit } from "../lib/audit";
 
 export function registerLocalAuthRoutes(app: Express) {
   // Login
@@ -37,6 +38,13 @@ export function registerLocalAuthRoutes(app: Express) {
       const safeUser = toSafeUser(user);
       req.session.userId = user.id;
       req.session.user = safeUser;
+
+      await logAudit({
+        actorId: user.id,
+        action: "auth.login",
+        entityType: "user",
+        entityId: user.id,
+      });
       
       res.json({ user: safeUser });
     } catch (err) {
@@ -50,12 +58,21 @@ export function registerLocalAuthRoutes(app: Express) {
 
   // Logout
   app.post("/api/auth/logout", (req, res) => {
+    const actorId = req.session?.userId;
     req.session.destroy((err) => {
       if (err) {
         return res.status(500).json({ message: "Logout failed" });
       }
       res.clearCookie("connect.sid");
       res.json({ message: "Logged out" });
+      if (actorId) {
+        logAudit({
+          actorId,
+          action: "auth.logout",
+          entityType: "user",
+          entityId: actorId,
+        }).catch(() => undefined);
+      }
     });
   });
 
@@ -92,6 +109,12 @@ export function registerLocalAuthRoutes(app: Express) {
       }
       
       await updateUser(user.id, { password: newPassword });
+      await logAudit({
+        actorId: req.session.userId,
+        action: "user.password_change",
+        entityType: "user",
+        entityId: user.id,
+      });
       res.json({ message: "Password changed successfully" });
     } catch (err) {
       console.error("Change password error:", err);
@@ -130,7 +153,14 @@ export function registerLocalAuthRoutes(app: Express) {
         lastName: data.lastName || undefined,
         role: data.role || "user",
       });
-      
+      await logAudit({
+        actorId: req.session.userId,
+        action: "user.create",
+        entityType: "user",
+        entityId: user.id,
+        details: { username: user.username, role: user.role },
+      });
+
       res.status(201).json(user);
     } catch (err) {
       if (err instanceof z.ZodError) {
@@ -151,6 +181,13 @@ export function registerLocalAuthRoutes(app: Express) {
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
+      await logAudit({
+        actorId: req.session.userId,
+        action: "user.update",
+        entityType: "user",
+        entityId: id,
+        details: { fields: Object.keys(updates || {}) },
+      });
       
       res.json(user);
     } catch (err) {
@@ -170,6 +207,12 @@ export function registerLocalAuthRoutes(app: Express) {
       }
       
       await deleteUser(id);
+      await logAudit({
+        actorId: req.session.userId,
+        action: "user.delete",
+        entityType: "user",
+        entityId: id,
+      });
       res.status(204).send();
     } catch (err) {
       console.error("Delete user error:", err);
@@ -191,6 +234,12 @@ export function registerLocalAuthRoutes(app: Express) {
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
+      await logAudit({
+        actorId: req.session.userId,
+        action: "user.password_reset",
+        entityType: "user",
+        entityId: id,
+      });
       
       res.json({ message: "Password reset successfully" });
     } catch (err) {

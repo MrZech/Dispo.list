@@ -22,15 +22,24 @@ export function getSession() {
     ttl: sessionTtl,
     tableName: "sessions",
   });
+
+  const sessionSecret = process.env.SESSION_SECRET;
+  if (!sessionSecret && process.env.NODE_ENV === "production") {
+    throw new Error("SESSION_SECRET must be set in production");
+  }
+  if (!sessionSecret) {
+    console.warn("SESSION_SECRET is not set; using an insecure default for development.");
+  }
   
   return session({
-    secret: process.env.SESSION_SECRET || "disposlist-secret-key-change-in-production",
+    secret: sessionSecret || "disposlist-secret-key-change-in-production",
     store: sessionStore,
     resave: false,
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
       maxAge: sessionTtl,
     },
   });

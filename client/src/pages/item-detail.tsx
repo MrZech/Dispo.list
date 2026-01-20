@@ -1,11 +1,13 @@
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams, useLocation } from "wouter";
-import { Item, Photo, InsertPhoto, User } from "@shared/schema";
-import { EBAY_COMPUTER_CATEGORIES, EBAY_CONDITION_IDS, getCategoryName, getConditionName } from "@shared/ebay-categories";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { Item, Photo, InsertPhoto } from "@shared/schema";
+import { EBAY_COMPUTER_CATEGORIES, EBAY_CONDITION_IDS } from "@shared/ebay-categories";
+import { apiRequest } from "@/lib/queryClient";
+import { api, buildUrl } from "@shared/routes";
+import { useUpdateItem } from "@/hooks/use-items";
 import LayoutShell from "@/components/layout-shell";
 import { 
-  Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter 
+  Card, CardContent, CardHeader, CardTitle, CardDescription 
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
@@ -18,8 +20,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   Package, Trash2, Camera, Maximize2, 
-  CheckCircle2, AlertCircle, ArrowLeft, Save, 
-  ExternalLink, FileOutput, Download
+  CheckCircle2, AlertCircle, ArrowLeft, FileOutput
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
@@ -30,6 +31,7 @@ export default function ItemDetail() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
 
   const { data: item, isLoading: itemLoading } = useQuery<Item>({
     queryKey: ["/api/items", itemId],
@@ -39,20 +41,11 @@ export default function ItemDetail() {
     queryKey: ["/api/items", itemId, "photos"],
   });
 
-  const updateItem = useMutation({
-    mutationFn: async (updates: Partial<Item>) => {
-      const res = await apiRequest("PUT", `/api/items/${itemId}`, updates);
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/items", itemId] });
-      toast({ title: "Updated", description: "Item changes saved successfully." });
-    },
-  });
+  const updateItem = useUpdateItem();
 
   const createPhoto = useMutation({
-    mutationFn: async (photo: InsertPhoto) => {
-      const res = await apiRequest("POST", "/api/photos", photo);
+    mutationFn: async (photo: Omit<InsertPhoto, "itemId">) => {
+      const res = await apiRequest("POST", buildUrl(api.photos.create.path, { itemId }), photo);
       return res.json();
     },
     onSuccess: () => {
@@ -80,8 +73,15 @@ export default function ItemDetail() {
     },
   });
 
-  const handleUpdate = (field: keyof Item, value: any) => {
-    updateItem.mutate({ [field]: value });
+  const normalizeValue = (value: unknown) => (value === "" ? null : value);
+
+  const handleUpdate = (field: keyof Item, value: unknown) => {
+    const normalized = normalizeValue(value);
+    const currentValue = item ? (item as any)[field] : undefined;
+    if (currentValue === normalized || (currentValue == null && normalized == null)) {
+      return;
+    }
+    updateItem.mutate({ id: itemId, [field]: normalized } as any);
   };
 
   if (itemLoading) {
@@ -562,4 +562,3 @@ export default function ItemDetail() {
     </LayoutShell>
   );
 }
-

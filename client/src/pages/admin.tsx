@@ -14,10 +14,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, Users, Database, Plus, Trash2, KeyRound, Shield, ShieldAlert, Play, AlertCircle } from "lucide-react";
+import { Loader2, Users, Database, Plus, Trash2, KeyRound, Shield, ShieldAlert, Play, AlertCircle, Activity } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import type { SafeUser } from "@shared/models/auth";
+import { formatDistanceToNow } from "date-fns";
 
 export default function Admin() {
   const { isAdmin, isLoading: authLoading } = useAuth();
@@ -57,6 +58,10 @@ export default function Admin() {
               <Database className="w-4 h-4" />
               Database
             </TabsTrigger>
+            <TabsTrigger value="activity" className="gap-2" data-testid="tab-activity">
+              <Activity className="w-4 h-4" />
+              Activity
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="users">
@@ -65,6 +70,10 @@ export default function Admin() {
 
           <TabsContent value="database">
             <DatabaseManagement />
+          </TabsContent>
+
+          <TabsContent value="activity">
+            <ActivityFeed />
           </TabsContent>
         </Tabs>
       </div>
@@ -460,5 +469,79 @@ function DatabaseManagement() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+type AuditEntry = {
+  id: number;
+  action: string;
+  entityType: string;
+  entityId: string | null;
+  details: Record<string, unknown> | null;
+  createdAt: string;
+  actorId: string | null;
+  actorUsername: string | null;
+};
+
+function ActivityFeed() {
+  const { data: logs = [], isLoading } = useQuery<AuditEntry[]>({
+    queryKey: ["/api/admin/audit", 50],
+    queryFn: async () => {
+      const url = new URL("/api/admin/audit", window.location.origin);
+      url.searchParams.set("limit", "50");
+      const res = await fetch(url.toString(), { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch audit log");
+      return res.json();
+    },
+  });
+
+  const formatAction = (action: string) =>
+    action
+      .split(".")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Recent Activity</CardTitle>
+        <CardDescription>Last 50 actions across the system.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {logs.length === 0 ? (
+          <div className="text-muted-foreground text-sm">No activity yet.</div>
+        ) : (
+          <div className="space-y-3">
+            {logs.map((entry) => (
+              <div key={entry.id} className="flex items-start justify-between gap-4 border-b border-border/60 pb-3">
+                <div className="space-y-1">
+                  <div className="text-sm font-medium">
+                    {formatAction(entry.action)}{" "}
+                    <span className="text-muted-foreground">
+                      {entry.entityType}
+                      {entry.entityId ? ` #${entry.entityId}` : ""}
+                    </span>
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {entry.actorUsername || entry.actorId || "System"}
+                  </div>
+                </div>
+                <div className="text-xs text-muted-foreground whitespace-nowrap">
+                  {formatDistanceToNow(new Date(entry.createdAt), { addSuffix: true })}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }

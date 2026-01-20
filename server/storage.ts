@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { eq, desc, inArray } from "drizzle-orm";
+import { and, desc, eq, ilike, inArray, or } from "drizzle-orm";
 import {
   users, items, photos, exportProfiles,
   type Item, type InsertItem, type UpdateItemRequest,
@@ -15,7 +15,7 @@ export interface IStorage {
   getItemBySku(sku: string): Promise<Item | undefined>;
   getItemsByIds(ids: number[]): Promise<ItemWithPhotos[]>;
   createItem(item: InsertItem): Promise<Item>;
-  updateItem(id: number, updates: UpdateItemRequest): Promise<Item>;
+  updateItem(id: number, updates: UpdateItemRequest): Promise<Item | undefined>;
   deleteItem(id: number): Promise<void>;
 
   // Photos
@@ -34,12 +34,30 @@ export class DatabaseStorage implements IStorage {
   async getItems(options?: { status?: string, search?: string, limit?: number, offset?: number }): Promise<ItemWithPhotos[]> {
     let query = db.select().from(items);
     
-    // Add filters here if needed (drizzle query builder)
+    const filters = [];
     if (options?.status) {
-      // query.where(eq(items.status, options.status));
-      // Note: simple implementation for now, complete later with full query builder
+      filters.push(eq(items.status, options.status));
     }
-    
+    if (options?.search) {
+      const term = `%${options.search}%`;
+      filters.push(or(
+        ilike(items.sku, term),
+        ilike(items.brand, term),
+        ilike(items.model, term),
+        ilike(items.category, term),
+      ));
+    }
+    if (filters.length > 0) {
+      query = query.where(and(...filters));
+    }
+
+    if (options?.limit) {
+      query = query.limit(options.limit);
+    }
+    if (options?.offset) {
+      query = query.offset(options.offset);
+    }
+
     const allItems = await query.orderBy(desc(items.intakeDate));
     
     if (allItems.length === 0) return [];
@@ -101,7 +119,7 @@ export class DatabaseStorage implements IStorage {
     return item;
   }
 
-  async updateItem(id: number, updates: UpdateItemRequest): Promise<Item> {
+  async updateItem(id: number, updates: UpdateItemRequest): Promise<Item | undefined> {
     const [item] = await db
       .update(items)
       .set({ ...updates, updatedAt: new Date() })

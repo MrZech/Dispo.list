@@ -91,6 +91,16 @@ export const exportProfiles = pgTable("export_profiles", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const auditLogs = pgTable("audit_logs", {
+  id: serial("id").primaryKey(),
+  actorId: text("actor_id").references(() => users.id),
+  action: text("action").notNull(),
+  entityType: text("entity_type").notNull(),
+  entityId: text("entity_id"),
+  details: jsonb("details"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // === RELATIONS ===
 
 export const itemsRelations = relations(items, ({ one, many }) => ({
@@ -138,6 +148,7 @@ export type Photo = typeof photos.$inferSelect;
 export type InsertPhoto = z.infer<typeof insertPhotoSchema>;
 export type ExportProfile = typeof exportProfiles.$inferSelect;
 export type InsertExportProfile = z.infer<typeof insertExportProfileSchema>;
+export type AuditLog = typeof auditLogs.$inferSelect;
 
 export type CreateItemRequest = InsertItem;
 export type UpdateItemRequest = Partial<InsertItem>;

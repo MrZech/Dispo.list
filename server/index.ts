@@ -66,8 +66,13 @@ app.use((req, res, next) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
 
+    if (res.headersSent) {
+      console.error("Error after headers sent:", err);
+      return;
+    }
+
     res.status(status).json({ message });
-    throw err;
+    console.error("Unhandled error:", err);
   });
 
   // importantly only setup vite in development and after
@@ -85,11 +90,14 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || "5000", 10);
+  const host =
+    process.env.HOST ||
+    (process.env.NODE_ENV === "production" ? "0.0.0.0" : "127.0.0.1");
   httpServer.listen(
     {
       port,
-      host: "0.0.0.0",
-      reusePort: true,
+      host,
+      reusePort: process.platform !== "win32",
     },
     () => {
       log(`serving on port ${port}`);

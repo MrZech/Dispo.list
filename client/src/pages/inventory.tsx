@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useItems } from "@/hooks/use-items";
 import LayoutShell from "@/components/layout-shell";
 import { ItemCard } from "@/components/item-card";
@@ -15,12 +15,19 @@ export default function Inventory() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<string>("all");
   const [isExporting, setIsExporting] = useState(false);
+  const [limit, setLimit] = useState(100);
   const debouncedSearch = useDebounce(search, 500);
   const { toast } = useToast();
+
+  useEffect(() => {
+    setLimit(100);
+  }, [debouncedSearch, status]);
 
   const { data: items, isLoading } = useItems({
     search: debouncedSearch,
     status: status === "all" ? undefined : status,
+    limit,
+    page: 1,
   });
 
   const handleEbayExport = async () => {
@@ -143,16 +150,30 @@ export default function Inventory() {
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {items?.map((item) => (
-              <ItemCard key={item.id} item={item} />
-            ))}
-            {items?.length === 0 && (
-              <div className="col-span-full py-20 text-center text-muted-foreground">
-                No items found matching your criteria.
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {items?.map((item) => (
+                <ItemCard key={item.id} item={item} />
+              ))}
+              {items?.length === 0 && (
+                <div className="col-span-full py-20 text-center text-muted-foreground">
+                  No items found matching your criteria.
+                </div>
+              )}
+            </div>
+            {!!items?.length && (
+              <div className="flex flex-col items-center gap-2 pt-4">
+                <div className="text-sm text-muted-foreground">
+                  Showing {items.length} items
+                </div>
+                {items.length === limit && (
+                  <Button variant="outline" onClick={() => setLimit((prev) => prev + 100)}>
+                    Load more
+                  </Button>
+                )}
               </div>
             )}
-          </div>
+          </>
         )}
       </div>
     </LayoutShell>

@@ -1,10 +1,23 @@
 import OpenAI from "openai";
 import type { Item } from "@shared/schema";
 
-const openai = new OpenAI({
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-});
+let openaiClient: OpenAI | null = null;
+
+function getOpenAIClient(): OpenAI {
+  const apiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
+  if (!apiKey) {
+    throw new Error("OpenAI API key is not configured.");
+  }
+
+  if (!openaiClient) {
+    openaiClient = new OpenAI({
+      apiKey,
+      baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+    });
+  }
+
+  return openaiClient;
+}
 
 export interface ItemSpecs {
   sku: string;
@@ -63,26 +76,34 @@ Estimated shipping times are provided as general guidelines and may vary. Orders
 
 export function buildPromptFromSpecs(specs: ItemSpecs): string {
   const specLines: string[] = [];
-  
+
   if (specs.brand) specLines.push(`Brand: ${specs.brand}`);
   if (specs.model) specLines.push(`Model: ${specs.model}`);
   if (specs.category) specLines.push(`Type: ${specs.category}`);
   if (specs.color) specLines.push(`Color: ${specs.color}`);
   if (specs.formFactor) specLines.push(`Form Factor: ${specs.formFactor}`);
-  if (specs.cpu || specs.processor) specLines.push(`Processor: ${specs.cpu || specs.processor}`);
-  if (specs.ram || specs.memory) specLines.push(`RAM: ${specs.ram || specs.memory}`);
+  if (specs.cpu || specs.processor)
+    specLines.push(`Processor: ${specs.cpu || specs.processor}`);
+  if (specs.ram || specs.memory)
+    specLines.push(`RAM: ${specs.ram || specs.memory}`);
   if (specs.storageType) specLines.push(`Storage Type: ${specs.storageType}`);
   if (specs.storageSize) specLines.push(`Storage Size: ${specs.storageSize}`);
-  if (specs.serialNumber) specLines.push(`Serial Number: ${specs.serialNumber}`);
-  if (specs.hasBattery !== undefined) specLines.push(`Has Battery: ${specs.hasBattery ? 'Yes' : 'No'}`);
-  if (specs.batteryHealth) specLines.push(`Battery Health: ${specs.batteryHealth}`);
-  if (specs.includesCharger !== undefined) specLines.push(`Includes Charger: ${specs.includesCharger ? 'Yes' : 'No'}`);
-  if (specs.includesCables) specLines.push(`Included Cables: ${specs.includesCables}`);
-  if (specs.accessories) specLines.push(`Accessories Included: ${specs.accessories}`);
+  if (specs.serialNumber)
+    specLines.push(`Serial Number: ${specs.serialNumber}`);
+  if (specs.hasBattery !== undefined)
+    specLines.push(`Has Battery: ${specs.hasBattery ? "Yes" : "No"}`);
+  if (specs.batteryHealth)
+    specLines.push(`Battery Health: ${specs.batteryHealth}`);
+  if (specs.includesCharger !== undefined)
+    specLines.push(`Includes Charger: ${specs.includesCharger ? "Yes" : "No"}`);
+  if (specs.includesCables)
+    specLines.push(`Included Cables: ${specs.includesCables}`);
+  if (specs.accessories)
+    specLines.push(`Accessories Included: ${specs.accessories}`);
   if (specs.additionalSpecs) specLines.push(specs.additionalSpecs);
-  
-  const specsBlock = specLines.join('\n');
-  
+
+  const specsBlock = specLines.join("\n");
+
   return `Generate a concise eBay listing for this item. ONLY include information that is explicitly provided below - do not add extra specs or features not listed here.
 
 PROVIDED SPECS:
@@ -129,10 +150,11 @@ Estimated shipping times are provided as general guidelines and may vary. Orders
 
 3. THEN, add a "Product Details" section with:
    - Brand and model
-   - Only the specs explicitly provided above
    - Battery health if provided
    - Charger/cables/accessories if specified
    - UPC and MPN only if you can verify them
+   - Dont Metion Storage unless it's explicitly provided
+   - If something is not provided, only include stuff that is garuanteed to be true
 
 4. End the Product Details section with: Inventory Number: ${specs.sku}
 
@@ -170,17 +192,17 @@ const SYSTEM_PROMPT = `You generate concise eBay listings. Rules:
 - Keep the product details section short - just the facts`;
 
 export async function generateEbayScript(prompt: string): Promise<string> {
-  const response = await openai.chat.completions.create({
+  const response = await getOpenAIClient().chat.completions.create({
     model: "gpt-5.1",
     messages: [
       {
         role: "system",
-        content: SYSTEM_PROMPT
+        content: SYSTEM_PROMPT,
       },
       {
         role: "user",
-        content: prompt
-      }
+        content: prompt,
+      },
     ],
     max_completion_tokens: 2048,
   });
@@ -189,27 +211,27 @@ export async function generateEbayScript(prompt: string): Promise<string> {
 }
 
 export async function generateEbayScriptStreaming(
-  prompt: string, 
-  onChunk: (content: string) => void
+  prompt: string,
+  onChunk: (content: string) => void,
 ): Promise<string> {
-  const stream = await openai.chat.completions.create({
+  const stream = await getOpenAIClient().chat.completions.create({
     model: "gpt-5.1",
     messages: [
       {
         role: "system",
-        content: SYSTEM_PROMPT
+        content: SYSTEM_PROMPT,
       },
       {
         role: "user",
-        content: prompt
-      }
+        content: prompt,
+      },
     ],
     max_completion_tokens: 2048,
     stream: true,
   });
 
   let fullResponse = "";
-  
+
   for await (const chunk of stream) {
     const content = chunk.choices[0]?.delta?.content || "";
     if (content) {

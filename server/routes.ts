@@ -6,7 +6,9 @@ import { z } from "zod";
 import { setupLocalAuth, registerLocalAuthRoutes, ensureDefaultAdmin, isAuthenticated, isAdmin } from "./auth";
 import { registerLocalStorageRoutes } from "./local-storage";
 import { db } from "./db";
-import { sql } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
+import { auditLogs, users } from "@shared/schema";
+import { logAudit } from "./lib/audit";
 
 import { generateCSV } from "./lib/csv-generator";
 import { generateEbayDraftCSV } from "./lib/ebay-csv-generator";
@@ -30,8 +32,17 @@ export async function registerRoutes(
   
   app.get(api.items.list.path, async (req, res) => {
     try {
-      // Basic implementation, filters can be added to storage
-      const items = await storage.getItems();
+      const params = api.items.list.input?.parse(req.query);
+      const limit = Math.min(params?.limit ?? 100, 500);
+      const page = Math.max(params?.page ?? 1, 1);
+      const offset = (page - 1) * limit;
+
+      const items = await storage.getItems({
+        status: params?.status,
+        search: params?.search,
+        limit,
+        offset,
+      });
       res.json(items);
     } catch (error) {
       res.status(500).json({ message: "Failed to list items" });
@@ -51,12 +62,19 @@ export async function registerRoutes(
       const input = api.items.create.input.parse(req.body);
       
       // Auto-assign creator if logged in
-      const userId = (req.user as any)?.claims?.sub;
+      const userId = req.session?.userId || (req.user as any)?.claims?.sub;
       if (userId) {
         input.createdBy = userId;
       }
       
       const item = await storage.createItem(input);
+      await logAudit({
+        actorId: userId,
+        action: "item.create",
+        entityType: "item",
+        entityId: item.id,
+        details: { sku: item.sku },
+      });
       res.status(201).json(item);
     } catch (err) {
       if (err instanceof z.ZodError) {
@@ -84,6 +102,13 @@ export async function registerRoutes(
       if (!updated) {
         return res.status(404).json({ message: "Item not found" });
       }
+      await logAudit({
+        actorId: req.session?.userId,
+        action: "item.update",
+        entityType: "item",
+        entityId: id,
+        details: { fields: Object.keys(input) },
+      });
       res.json(updated);
     } catch (err) {
       if (err instanceof z.ZodError) {
@@ -97,7 +122,14 @@ export async function registerRoutes(
   });
 
   app.delete(api.items.delete.path, async (req, res) => {
-    await storage.deleteItem(Number(req.params.id));
+    const id = Number(req.params.id);
+    await storage.deleteItem(id);
+    await logAudit({
+      actorId: req.session?.userId,
+      action: "item.delete",
+      entityType: "item",
+      entityId: id,
+    });
     res.status(204).send();
   });
 
@@ -352,6 +384,35 @@ export async function registerRoutes(
     } catch (err) {
       console.error("Database query error:", err);
       res.status(500).json({ message: `Query failed: ${(err as Error).message}` });
+    }
+  });
+
+  // Recent audit activity (admin only)
+  app.get("/api/admin/audit", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const limitParam = Number(req.query.limit || 50);
+      const limit = Math.max(1, Math.min(limitParam, 200));
+
+      const rows = await db
+        .select({
+          id: auditLogs.id,
+          action: auditLogs.action,
+          entityType: auditLogs.entityType,
+          entityId: auditLogs.entityId,
+          details: auditLogs.details,
+          createdAt: auditLogs.createdAt,
+          actorId: auditLogs.actorId,
+          actorUsername: users.username,
+        })
+        .from(auditLogs)
+        .leftJoin(users, eq(auditLogs.actorId, users.id))
+        .orderBy(desc(auditLogs.createdAt))
+        .limit(limit);
+
+      res.json(rows);
+    } catch (err) {
+      console.error("Audit log error:", err);
+      res.status(500).json({ message: "Failed to load audit log" });
     }
   });
 
