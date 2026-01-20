@@ -28,7 +28,7 @@ import {
 import { cn } from "@/lib/utils";
 
 export default function LayoutShell({ children }: { children: ReactNode }) {
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const { user, logout, isAdmin } = useAuth();
 
   const navigation = [
@@ -44,11 +44,16 @@ export default function LayoutShell({ children }: { children: ReactNode }) {
     <div className="flex flex-col h-full bg-slate-50 dark:bg-slate-900/50 border-r border-border">
       <div className="p-6 flex items-center justify-between">
         <div>
-          <Link href="/" aria-label="Go to Dashboard">
-            <h1 className="text-2xl font-display font-bold text-primary hover:text-primary/80 transition-colors">
-              DispoList
-            </h1>
-          </Link>
+          <h1
+            className="text-2xl font-display font-bold text-primary hover:text-primary/80 transition-colors cursor-pointer"
+            role="button"
+            tabIndex={0}
+            onClick={handleGoHome}
+            onKeyDown={handleLogoKeyDown}
+            aria-label="Go to Dashboard"
+          >
+            DispoList
+          </h1>
           <p className="text-xs text-muted-foreground mt-1">Inventory Management</p>
         </div>
         <ThemeToggle />
@@ -123,11 +128,16 @@ export default function LayoutShell({ children }: { children: ReactNode }) {
 
       {/* Mobile Header */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-md border-b border-border h-16 flex items-center justify-between px-4">
-        <Link href="/" aria-label="Go to Dashboard">
-          <h1 className="text-xl font-display font-bold text-primary hover:text-primary/80 transition-colors">
-            DispoList
-          </h1>
-        </Link>
+        <h1
+          className="text-xl font-display font-bold text-primary hover:text-primary/80 transition-colors cursor-pointer"
+          role="button"
+          tabIndex={0}
+          onClick={handleGoHome}
+          onKeyDown={handleLogoKeyDown}
+          aria-label="Go to Dashboard"
+        >
+          DispoList
+        </h1>
         <div className="flex items-center gap-2">
           <ThemeToggle />
           <Sheet>
@@ -152,3 +162,10 @@ export default function LayoutShell({ children }: { children: ReactNode }) {
     </div>
   );
 }
+  const handleGoHome = () => setLocation("/");
+  const handleLogoKeyDown = (event: React.KeyboardEvent<HTMLHeadingElement>) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      handleGoHome();
+    }
+  };
