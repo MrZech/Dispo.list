@@ -44,7 +44,11 @@ export default function LayoutShell({ children }: { children: ReactNode }) {
     <div className="flex flex-col h-full bg-slate-50 dark:bg-slate-900/50 border-r border-border">
       <div className="p-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-display font-bold text-primary">DispoList</h1>
+          <Link href="/" aria-label="Go to Dashboard">
+            <h1 className="text-2xl font-display font-bold text-primary hover:text-primary/80 transition-colors">
+              DispoList
+            </h1>
+          </Link>
           <p className="text-xs text-muted-foreground mt-1">Inventory Management</p>
         </div>
         <ThemeToggle />
@@ -119,7 +123,11 @@ export default function LayoutShell({ children }: { children: ReactNode }) {
 
       {/* Mobile Header */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-md border-b border-border h-16 flex items-center justify-between px-4">
-        <h1 className="text-xl font-display font-bold text-primary">DispoList</h1>
+        <Link href="/" aria-label="Go to Dashboard">
+          <h1 className="text-xl font-display font-bold text-primary hover:text-primary/80 transition-colors">
+            DispoList
+          </h1>
+        </Link>
         <div className="flex items-center gap-2">
           <ThemeToggle />
           <Sheet>
