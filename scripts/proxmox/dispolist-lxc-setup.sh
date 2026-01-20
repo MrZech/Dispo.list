@@ -77,7 +77,7 @@ if [[ ! -f /opt/dispolist/.env ]]; then
   POSTGRES_PASSWORD="$(openssl rand -hex 16)"
   POSTGRES_DB="dispolist"
   SESSION_SECRET="$(openssl rand -hex 32)"
-  APP_PORT="6000"
+  APP_PORT="8080"
   cat > /opt/dispolist/.env <<ENV
 APP_PORT=${APP_PORT}
 POSTGRES_USER=${POSTGRES_USER}
@@ -128,5 +128,5 @@ systemctl enable --now dispolist-update.timer
 EOF
 
 echo "Done. Container ${CTID} (${HOSTNAME}) is running with Docker and Portainer."
-echo "App: http://<container-ip>:6000"
+echo "App: http://<container-ip>:8080"
 echo "Portainer: http://<container-ip>:9000"
