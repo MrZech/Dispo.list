@@ -94,20 +94,21 @@ export function ItemCard({ item }: ItemCardProps) {
       </CardContent>
       
       <CardFooter className="p-4 pt-0 border-t border-border/50 bg-secondary/20 mt-auto">
-        <div className="flex flex-col gap-2 w-full">
+        <div className="flex items-center justify-between gap-2 w-full">
           <span className="text-xs text-muted-foreground">
             {item.updatedAt && formatDistanceToNow(new Date(item.updatedAt), { addSuffix: true })}
           </span>
-          <div className="flex flex-wrap items-center gap-2 justify-end">
+          <div className="flex items-center gap-2">
           {nextStatus && (
             <Button
-              size="sm"
+              size="icon"
               variant="secondary"
               disabled={updateItem.isPending}
               onClick={() => updateItem.mutate({ id: item.id, status: nextStatus } as any)}
+              aria-label={`Next: ${statusLabels[nextStatus]}`}
+              title={`Next: ${statusLabels[nextStatus]}`}
             >
-              <ArrowRight className="w-4 h-4 mr-1" />
-              Next: {statusLabels[nextStatus]}
+              <ArrowRight className="w-4 h-4" />
             </Button>
           )}
           <Link href={`/items/${item.id}`}>
