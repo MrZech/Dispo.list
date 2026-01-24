@@ -93,11 +93,12 @@ export function ItemCard({ item }: ItemCardProps) {
         </div>
       </CardContent>
       
-      <CardFooter className="p-4 pt-0 flex justify-between items-center border-t border-border/50 bg-secondary/20 mt-auto gap-2">
-        <span className="text-xs text-muted-foreground">
-          {item.updatedAt && formatDistanceToNow(new Date(item.updatedAt), { addSuffix: true })}
-        </span>
-        <div className="flex items-center gap-1">
+      <CardFooter className="p-4 pt-0 border-t border-border/50 bg-secondary/20 mt-auto">
+        <div className="flex flex-col gap-2 w-full">
+          <span className="text-xs text-muted-foreground">
+            {item.updatedAt && formatDistanceToNow(new Date(item.updatedAt), { addSuffix: true })}
+          </span>
+          <div className="flex flex-wrap items-center gap-2 justify-end">
           {nextStatus && (
             <Button
               size="sm"
@@ -115,6 +116,7 @@ export function ItemCard({ item }: ItemCardProps) {
               Manage
             </Button>
           </Link>
+          </div>
         </div>
       </CardFooter>
     </Card>
