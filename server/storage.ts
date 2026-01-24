@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { and, desc, eq, ilike, inArray, or } from "drizzle-orm";
+import { and, desc, eq, ilike, inArray, notInArray, or } from "drizzle-orm";
 import {
   users, items, photos, exportProfiles,
   type Item, type InsertItem, type UpdateItemRequest,
@@ -36,7 +36,13 @@ export class DatabaseStorage implements IStorage {
     
     const filters = [];
     if (options?.status) {
-      filters.push(eq(items.status, options.status));
+      if (options.status === "active") {
+        filters.push(notInArray(items.status, ["listed", "sold", "scrap"]));
+      } else if (options.status === "archived") {
+        filters.push(inArray(items.status, ["listed", "sold", "scrap"]));
+      } else {
+        filters.push(eq(items.status, options.status));
+      }
     }
     if (options?.search) {
       const term = `%${options.search}%`;

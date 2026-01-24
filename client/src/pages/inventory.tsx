@@ -13,7 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 
 export default function Inventory() {
   const [search, setSearch] = useState("");
-  const [status, setStatus] = useState<string>("all");
+  const [status, setStatus] = useState<string>("active");
   const [isExporting, setIsExporting] = useState(false);
   const [limit, setLimit] = useState(100);
   const debouncedSearch = useDebounce(search, 500);
@@ -138,6 +138,8 @@ export default function Inventory() {
                 <SelectValue placeholder="Filter by Status" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="active">Active (Not Listed/Sold/Scrap)</SelectItem>
+                <SelectItem value="archived">Archived (Listed/Sold/Scrap)</SelectItem>
                 <SelectItem value="all">All Statuses</SelectItem>
                 <SelectItem value="intake">Intake</SelectItem>
                 <SelectItem value="processing">Processing</SelectItem>

@@ -7,6 +7,7 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { ArrowRight, Edit, Package } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUpdateItem } from "@/hooks/use-items";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface ItemCardProps {
   item: Item & { photos?: { url: string }[] };
@@ -100,16 +101,20 @@ export function ItemCard({ item }: ItemCardProps) {
           </span>
           <div className="flex items-center gap-2">
           {nextStatus && (
-            <Button
-              size="icon"
-              variant="secondary"
-              disabled={updateItem.isPending}
-              onClick={() => updateItem.mutate({ id: item.id, status: nextStatus } as any)}
-              aria-label={`Next: ${statusLabels[nextStatus]}`}
-              title={`Next: ${statusLabels[nextStatus]}`}
-            >
-              <ArrowRight className="w-4 h-4" />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="icon"
+                  variant="secondary"
+                  disabled={updateItem.isPending}
+                  onClick={() => updateItem.mutate({ id: item.id, status: nextStatus } as any)}
+                  aria-label={`Next: ${statusLabels[nextStatus]}`}
+                >
+                  <ArrowRight className="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Next: {statusLabels[nextStatus]}</TooltipContent>
+            </Tooltip>
           )}
           <Link href={`/items/${item.id}`}>
             <Button size="sm" variant="ghost" className="hover:bg-background shadow-none hover:shadow-sm">

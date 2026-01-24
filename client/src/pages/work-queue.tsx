@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import type { DragEvent } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { Link } from "wouter";
 import { ArrowRight, Search } from "lucide-react";
@@ -28,6 +29,8 @@ const statusFlow: Record<string, string | undefined> = {
 
 export default function WorkQueue() {
   const [search, setSearch] = useState("");
+  const [overrides, setOverrides] = useState<Record<number, string>>({});
+  const [dragOverStage, setDragOverStage] = useState<string | null>(null);
   const debouncedSearch = useDebounce(search, 400);
   const updateItem = useUpdateItem();
 
@@ -43,17 +46,54 @@ export default function WorkQueue() {
       buckets[stage.status] = [];
     }
     (items || []).forEach((item) => {
-      if (buckets[item.status]) {
-        buckets[item.status].push(item);
+      const effectiveStatus = overrides[item.id] || item.status;
+      if (buckets[effectiveStatus]) {
+        buckets[effectiveStatus].push(item);
       }
     });
     return buckets;
-  }, [items]);
+  }, [items, overrides]);
 
   const totalInQueue = WORKFLOW_STAGES.reduce(
     (sum, stage) => sum + (grouped[stage.status]?.length || 0),
     0
   );
+
+  const handleDrop = (status: string) => (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    const idText = event.dataTransfer.getData("text/plain");
+    const itemId = Number(idText);
+    if (!itemId) return;
+
+    const item = items?.find((entry) => entry.id === itemId);
+    if (!item) return;
+
+    const currentStatus = overrides[itemId] || item.status;
+    if (currentStatus === status) return;
+
+    setOverrides((prev) => ({ ...prev, [itemId]: status }));
+    updateItem.mutate(
+      { id: itemId, status } as any,
+      {
+        onSuccess: () => {
+          setOverrides((prev) => {
+            const next = { ...prev };
+            delete next[itemId];
+            return next;
+          });
+        },
+        onError: () => {
+          setOverrides((prev) => ({ ...prev, [itemId]: currentStatus }));
+        },
+      }
+    );
+    setDragOverStage(null);
+  };
+
+  const handleDragStart = (itemId: number) => (event: DragEvent<HTMLDivElement>) => {
+    event.dataTransfer.setData("text/plain", String(itemId));
+    event.dataTransfer.effectAllowed = "move";
+  };
 
   return (
     <LayoutShell>
@@ -94,7 +134,14 @@ export default function WorkQueue() {
               return (
                 <div
                   key={stage.status}
-                  className="rounded-2xl border border-border bg-card/40 p-4 space-y-4 min-h-[220px]"
+                  className={[
+                    "rounded-2xl border border-border bg-card/40 p-4 space-y-4 min-h-[220px] transition-colors",
+                    dragOverStage === stage.status ? "ring-2 ring-primary/40 bg-primary/5" : "",
+                  ].join(" ")}
+                  onDragOver={(event) => event.preventDefault()}
+                  onDragEnter={() => setDragOverStage(stage.status)}
+                  onDragLeave={() => setDragOverStage(null)}
+                  onDrop={handleDrop(stage.status)}
                 >
                   <div className="flex items-center justify-between">
                     <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
@@ -105,11 +152,14 @@ export default function WorkQueue() {
 
                   <div className="space-y-3">
                     {stageItems.map((item) => {
-                      const nextStatus = statusFlow[item.status];
+                      const effectiveStatus = overrides[item.id] || item.status;
+                      const nextStatus = statusFlow[effectiveStatus];
                       return (
                         <div
                           key={item.id}
-                          className="rounded-xl border border-border/70 bg-background p-3 shadow-sm"
+                          className="rounded-xl border border-border/70 bg-background p-3 shadow-sm cursor-grab active:cursor-grabbing"
+                          draggable
+                          onDragStart={handleDragStart(item.id)}
                         >
                           <div className="flex items-start justify-between gap-2">
                             <div>
