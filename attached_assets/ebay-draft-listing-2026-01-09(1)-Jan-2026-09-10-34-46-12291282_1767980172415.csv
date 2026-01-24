@@ -1,0 +1,11 @@
+﻿LineNumber,DraftID,Title,Status,Link to complete draft,ErrorCode,ErrorMessage
+    ,
+    ,
+    ,
+    ,
+    ,400,Invalid draft request. Please check key and manifest category Id and condition values.
+    ,
+    ,
+    ,
+    ,
+    ,400,Invalid draft request. Please check key and manifest category Id and condition values.

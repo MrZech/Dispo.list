@@ -1,0 +1,233 @@
+# DispoList – Internal Inventory & eBay Listing System
+
+## Purpose
+DispoList is an internal, web-based inventory and listing system designed to replicate the *entire eBay listing workflow in-house*.
+
+The goal is to:
+- Capture inventory at intake quickly (mobile-friendly)
+- Progress items through testing and review
+- Store **all data required by eBay’s CSV templates**
+- Generate a **template-accurate CSV** that can be manually uploaded to eBay
+
+This system is intentionally designed to reduce friction, eliminate spreadsheet guesswork, and standardize how items move from physical intake → listed on eBay.
+
+---
+
+## Core Principles
+
+1. **Inventory First, eBay Second**  
+   The database is the source of truth. eBay CSVs are generated *from* the database, not manually edited.
+
+2. **Template-Aware, Not Template-Locked**  
+   eBay CSV templates change. The system must import templates and map fields dynamically rather than hardcoding column names.
+
+3. **Mobile-First Intake, Desktop-Heavy Processing**  
+   Intake must be fast and minimal. Detail work happens later.
+
+4. **Human Workflow > Automation (for now)**  
+   CSV upload to eBay is manual initially. Automation can come later.
+
+---
+
+## High-Level Workflow
+
+1. **Intake (D1 / Mobile / Brief / Dictation)**
+2. **Test / Expand Description**
+3. **Draft Listing (eBay-aligned)**
+4. **Second Review**
+5. **CSV Export → eBay Upload**
+
+Scrap items fork out early and never reach listing/export.
+
+---
+
+## Intake Stage (Minimal Required Data)
+
+### Purpose
+Capture enough information to:
+- Track the item
+- Decide Research vs Scrap
+- Associate photos immediately
+
+### Intake Fields
+
+**Identity / 5Ws**
+- SKU (scan or type)
+- Date of intake
+- Source (company/person)
+- Source location
+- Dropoff type (dropoff / pickup / shipment)
+- Category / Type (Laptop, Desktop, Monitor, Network, Other)
+
+**Quick Assessment**
+- Intake power test (powers on / lights up when plugged in)
+- Intake notes (optional)
+
+**Media**
+- Intake photos (1+ images)
+
+**Decision**
+- Research
+- Scrap
+
+> Intake must be fast and usable on a phone. No deep specs here.
+
+---
+
+## Test / Processing Stage
+
+### Purpose
+Expand the description into something listing-ready and record actual testing performed.
+
+### Test & Spec Fields
+
+**Hardware Details**
+- Brand
+- Model
+- CPU
+- RAM
+- Storage (SSD/HDD type + size)
+- Battery health (percentage or notes)
+- Charger included (Yes / No / Unknown)
+
+**Testing**
+- Bench tested (Yes/No)
+- Test tool used (Magic Octopus, Dell ePSA, MemTest, etc.)
+- Magic Octopus run (Yes/No)
+- Bench notes (freeform)
+
+**Compliance**
+- Data destruction required (Yes/No)
+  - Triggered automatically if storage is present or unknown
+
+---
+
+## Draft Listing Stage (eBay-Oriented)
+
+### Purpose
+Store *everything eBay needs* so listings can be generated without touching spreadsheets.
+
+### eBay Listing Fields (Canonical)
+
+- eBay Category ID
+- Condition ID (USED / NEW / numeric if required)
+- Listing format (FixedPrice / Auction)
+- Quantity
+- Price (list price)
+- Research price (sold comps reference)
+- UPC (optional / blank allowed)
+
+**Workflow Flags**
+- eBay template drafted (Yes/No)
+- Second review completed (Yes/No)
+- Reviewer name
+
+**Storage & Fulfillment**
+- Storage location (box / letter / shelf)
+
+---
+
+## Photos & Media Handling
+
+### Key Rule
+**eBay CSVs only accept image URLs — not file uploads.**
+
+### System Requirements
+- All photos must be hosted publicly over HTTPS
+- Images stored per SKU
+- Ability to select which photos are used for the eBay listing
+- Preserve order (primary image first)
+
+### Database Representation
+- Item ID
+- Photo type (intake / listing)
+- Storage key / filename
+- Public URL
+- Sort order
+
+### CSV Export Behavior
+- Populate the `Item photo URL` column with listing photo URLs
+- Support multiple photos if template allows
+
+---
+
+## eBay CSV Export System
+
+### Core Requirement
+The exported CSV **must exactly match the eBay template**, including:
+- `#INFO` header rows
+- Column order
+- Exact column names
+- Required fields
+
+### Export Profiles
+
+Each Export Profile contains:
+- Template name
+- Template version
+- Full header definition
+- Required column list
+- Mapping rules (internal field → template column)
+- Default/static values
+
+### Example Mappings
+- SKU → Custom label (SKU)
+- eBay Category ID → Category ID
+- Price → Price
+- Condition → Condition ID
+- Description (generated) → Description
+- Action → `Action(SiteID=US|Country=US|Currency=USD|…)`
+
+### Validation Before Export
+- Required fields present
+- Numeric fields are numeric
+- Photo URLs are valid HTTPS
+- Category + Condition compatibility
+
+### Output
+- CSV file ready for manual upload to eBay
+- No post-processing required
+
+---
+
+## Scrap Workflow
+
+Items marked as **Scrap**:
+- Exit the listing pipeline
+- Retain intake + decision history
+- Optional future tracking (recycling, disposal, audit)
+
+---
+
+## Roles & Permissions (Future)
+
+- Intake staff: create items, upload photos
+- Test staff: edit specs and testing fields
+- Reviewers: approve drafts
+- Admin: manage templates, mappings, exports
+
+---
+
+## Non-Goals (For Now)
+
+- Automatic posting to eBay via API
+- Real-time inventory sync with eBay
+- Financial accounting
+
+These can be layered in later once workflows are stable.
+
+---
+
+## Summary Statement (Prompt-Style)
+
+> Build a web-based internal inventory system that mirrors the full eBay listing workflow. The system must capture intake data quickly, expand items through testing and review, store all data required by eBay’s CSV templates, host listing images publicly, and generate template-accurate CSV files for manual upload to eBay. The database is canonical; eBay templates are imported and mapped via export profiles to ensure long-term compatibility.
+
+---
+
+## Next Implementation Milestones
+
+1. Persist prototype data to database
+2. Add template upload + mapping UI
+3. Add real CSV generation from Export Profiles
+4. Add photo hosting + public URLs
+5. Harden validation to eliminate eBay upload failures
